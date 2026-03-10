@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CLASH — Online Rock Paper Scissors</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root {
+  --p1: #ff6b35; --p1d: rgba(255,107,53,0.15); --p1g: rgba(255,107,53,0.5);
+  --p2: #00d4ff; --p2d: rgba(0,212,255,0.15);  --p2g: rgba(0,212,255,0.5);
+  --win: #39ff85; --lose: #ff3965; --draw: #ffd700;
+  --bg: #08060e; --panel: #100d1a; --border: #221c35; --text: #d8cff0; --dim: #4a3f6b;
+  --rock: #ff5555; --paper: #55aaff; --scissors: #ffdd55;
+  --bronze: #cd7f32; --silver: #c0c0c0; --gold: #ffd700;
+  --platinum: #00e5ff; --diamond: #b040ff; --legend: #ff6b35;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:'Barlow Condensed',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 20% 50%,rgba(255,107,53,.07) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 50%,rgba(0,212,255,.07) 0%,transparent 70%);
+  pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(34,28,53,.3) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,28,53,.3) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;z-index:0;}
+
+/* ── SCREENS ── */
+.screen{position:relative;z-index:1;min-height:100vh;display:none;
+  flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:18px;}
+.screen.active{display:flex;}
+
+/* ── ONLINE BAR ── */
+.online-bar{position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 16px;background:rgba(8,6,14,.9);
+  border-bottom:1px solid var(--border);backdrop-filter:blur(10px);}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--win);
+  box-shadow:0 0 8px var(--win);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.online-count{font-size:.7rem;letter-spacing:2px;color:var(--dim);
+  display:flex;align-items:center;gap:6px;}
+.online-count span{color:var(--win);font-family:'Bebas Neue',cursive;font-size:1rem;}
+.queue-pill{font-size:.65rem;letter-spacing:2px;color:var(--draw);
+  background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);
+  border-radius:20px;padding:3px 10px;display:none;}
+.queue-pill.visible{display:block;}
+
+/* ── SPLASH ── */
+#splash{padding-top:60px;}
+.logo{font-family:'Bebas Neue',cursive;font-size:clamp(3.5rem,13vw,6rem);
+  letter-spacing:8px;line-height:.9;
+  background:linear-gradient(135deg,var(--p1) 0%,#ff0080 40%,var(--p2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 30px rgba(255,107,53,.4));
+  animation:logoPulse 4s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 30px rgba(255,107,53,.4))}
+  50%{filter:drop-shadow(0 0 50px rgba(0,212,255,.5))}}
+.logo-sub{font-size:.7rem;letter-spacing:5px;color:var(--dim);text-transform:uppercase;}
+
+.name-row{display:flex;gap:10px;align-items:center;}
+.name-input{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:12px 18px;color:var(--text);font-family:'Barlow Condensed',sans-serif;
+  font-size:1.1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  outline:none;transition:all .2s;width:220px;text-align:center;}
+.name-input:focus{border-color:var(--p1);box-shadow:0 0 15px var(--p1d);}
+
+.rank-display{display:flex;align-items:center;gap:10px;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:12px 20px;}
+.rank-icon{font-size:1.8rem;}
+.rank-info{display:flex;flex-direction:column;gap:2px;}
+.rank-name{font-family:'Bebas Neue',cursive;font-size:1.2rem;letter-spacing:2px;}
+.rank-elo{font-size:.7rem;letter-spacing:2px;color:var(--dim);}
+
+.play-btn{padding:18px 60px;border-radius:60px;border:none;
+  background:linear-gradient(135deg,var(--p1),#ff0080);color:#fff;
+  font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:4px;
+  cursor:pointer;transition:all .3s;box-shadow:0 0 30px rgba(255,107,53,.35);
+  position:relative;overflow:hidden;}
+.play-btn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 0%,rgba(255,255,255,.15) 50%,transparent 100%);
+  transform:translateX(-100%);transition:transform .4s;}
+.play-btn:hover::before{transform:translateX(100%);}
+.play-btn:hover{transform:scale(1.05);box-shadow:0 0 50px rgba(255,107,53,.5);}
+.play-btn:active{transform:scale(.97);}
+
+.mini-lb-btn{padding:10px 30px;border-radius:30px;border:1px solid var(--border);
+  background:transparent;color:var(--dim);font-family:'Bebas Neue',cursive;
+  font-size:1rem;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+.mini-lb-btn:hover{border-color:var(--text);color:var(--text);}
+
+/* ── QUEUE ── */
+#queueScreen{gap:20px;text-align:center;}
+.queue-anim{width:100px;height:100px;border-radius:50%;
+  border:3px solid var(--border);position:relative;margin:0 auto;
+  animation:spinRing 2s linear infinite;}
+@keyframes spinRing{to{transform:rotate(360deg)}}
+.queue-anim::before{content:'⚡';position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-size:2.5rem;animation:none;
+  transform:none;}
+.queue-anim::after{content:'';position:absolute;top:-3px;left:50%;
+  width:6px;height:6px;border-radius:50%;background:var(--p2);
+  box-shadow:0 0 12px var(--p2);transform:translateX(-50%);}
+.queue-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:4px;color:var(--p2);}
+.queue-sub{font-size:.8rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;}
+.queue-stats{display:flex;gap:14px;justify-content:center;}
+.q-stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:10px 18px;text-align:center;}
+.q-stat-v{font-family:'Bebas Neue',cursive;font-size:1.5rem;color:var(--text);}
+.q-stat-l{font-size:.6rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;}
+.cancel-btn{padding:12px 36px;border-radius:30px;border:1px solid var(--border);
+  background:transparent;color:var(--dim);font-family:'Bebas Neue',cursive;
+  font-size:1rem;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+.cancel-btn:hover{border-color:var(--lose);color:var(--lose);}
+
+/* ── FOUND MATCH ── */
+.found-overlay{position:fixed;inset:0;z-index:200;
+  background:rgba(8,6,14,.95);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;
+  animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.found-title{font-family:'Bebas Neue',cursive;font-size:3rem;letter-spacing:6px;
+  color:var(--win);filter:drop-shadow(0 0 20px var(--win));}
+.found-vs{display:flex;align-items:center;gap:24px;}
+.found-player{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.found-name{font-family:'Bebas Neue',cursive;font-size:1.4rem;letter-spacing:3px;}
+.found-rank{font-size:.7rem;letter-spacing:2px;color:var(--dim);}
+.found-elo{font-size:.65rem;letter-spacing:1px;color:var(--dim);}
+.found-vs-badge{font-family:'Bebas Neue',cursive;font-size:2rem;color:var(--border);}
+.found-count{font-family:'Bebas Neue',cursive;font-size:4rem;color:var(--draw);}
+
+/* ── GAME ── */
+#game{padding-top:50px;justify-content:flex-start;gap:12px;}
+.g-wrap{width:100%;max-width:620px;display:flex;flex-direction:column;gap:12px;}
+
+/* HUD */
+.hud{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;}
+.p-hud{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;position:relative;overflow:hidden;transition:all .3s;}
+.p-hud::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  transform:scaleX(0);transform-origin:left;transition:transform .5s ease;}
+.p-hud.p1-h::after{background:var(--p1);}
+.p-hud.p2-h::after{background:var(--p2);transform-origin:right;}
+.p-hud.scoring::after{transform:scaleX(1);}
+.p-hud.p2-h{text-align:right;}
+.hud-lbl{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;}
+.p1-h .hud-lbl{color:var(--p1);}
+.p2-h .hud-lbl{color:var(--p2);}
+.hud-sc{font-family:'Bebas Neue',cursive;font-size:2.4rem;line-height:1;}
+.p1-h .hud-sc{color:var(--p1);}
+.p2-h .hud-sc{color:var(--p2);}
+.hud-sc.bump{animation:sb .4s ease;}
+@keyframes sb{0%,100%{transform:scale(1)}50%{transform:scale(1.6)}}
+.hud-rank{font-size:.65rem;letter-spacing:1px;color:var(--dim);}
+.prog-dots{display:flex;gap:3px;margin-top:4px;}
+.p2-h .prog-dots{justify-content:flex-end;}
+.pd{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .3s;}
+.pd.f1{background:var(--p1);box-shadow:0 0 5px var(--p1g);}
+.pd.f2{background:var(--p2);box-shadow:0 0 5px var(--p2g);}
+
+.c-hud{text-align:center;}
+.c-round{font-size:.6rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;}
+.c-rnum{font-family:'Bebas Neue',cursive;font-size:1.5rem;color:var(--border);letter-spacing:2px;}
+.c-target{font-size:.55rem;letter-spacing:2px;color:var(--dim);}
+
+/* Arena */
+.arena{background:var(--panel);border:1px solid var(--border);border-radius:18px;
+  padding:18px 14px;position:relative;overflow:hidden;}
+.arena::before{content:'';position:absolute;top:-50%;left:50%;width:1px;height:200%;
+  background:linear-gradient(to bottom,transparent,rgba(77,200,255,.1),transparent);}
+
+.fighters{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.fighter{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.ftr-lbl{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;}
+.p1-side .ftr-lbl{color:var(--p1);}
+.p2-side .ftr-lbl{color:var(--p2);}
+
+.hand{width:95px;height:95px;border-radius:16px;display:flex;align-items:center;
+  justify-content:center;font-size:3.8rem;border:2px solid var(--border);
+  background:rgba(10,8,20,.8);transition:all .3s;position:relative;}
+.p1-side .hand{border-color:rgba(255,107,53,.3);}
+.p2-side .hand{border-color:rgba(0,212,255,.3);}
+.hand.reveal{animation:hReveal .5s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes hReveal{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.hand.winner-h{animation:wPop .7s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes wPop{0%{transform:scale(1)}50%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1.08)}}
+.hand.loser-h{opacity:.25;filter:grayscale(1);transform:scale(.9);}
+.hand.glow-p1{box-shadow:0 0 28px var(--p1g),0 0 60px rgba(255,107,53,.12);border-color:var(--p1);}
+.hand.glow-p2{box-shadow:0 0 28px var(--p2g),0 0 60px rgba(0,212,255,.12);border-color:var(--p2);}
+.hand.glow-draw{box-shadow:0 0 18px rgba(255,215,0,.3);border-color:var(--draw);}
+.hand.thinking::after{content:'...';position:absolute;bottom:-20px;
+  font-size:.7rem;color:var(--dim);letter-spacing:2px;font-family:'Barlow Condensed',sans-serif;}
+
+/* Opponent chose indicator */
+.opp-chose{font-size:.6rem;letter-spacing:2px;color:var(--win);
+  text-transform:uppercase;min-height:14px;animation:flash .5s ease;}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.3}}
+
+.fight-mid{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:70px;}
+.mid-result{font-family:'Bebas Neue',cursive;font-size:1.6rem;letter-spacing:2px;
+  min-height:36px;display:flex;align-items:center;justify-content:center;
+  transition:all .3s;}
+.mid-result.rp1{color:var(--p1);filter:drop-shadow(0 0 8px var(--p1g));}
+.mid-result.rp2{color:var(--p2);filter:drop-shadow(0 0 8px var(--p2g));}
+.mid-result.rdraw{color:var(--draw);filter:drop-shadow(0 0 8px var(--draw));}
+.mid-result.pop{animation:rPop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes rPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.mid-desc{font-size:.6rem;letter-spacing:2px;color:var(--dim);text-align:center;min-height:14px;}
+.mid-count{font-family:'Bebas Neue',cursive;font-size:2.4rem;color:var(--border);
+  min-height:44px;display:flex;align-items:center;justify-content:center;}
+.mid-count.cnt{animation:cPop .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes cPop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* Pick buttons */
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pb{padding:14px 6px 10px;border-radius:12px;border:2px solid var(--border);
+  background:rgba(16,13,26,.8);cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;gap:5px;transition:all .18s;position:relative;overflow:hidden;
+  font-family:'Barlow Condensed',sans-serif;}
+.pb::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.04),transparent);pointer-events:none;}
+.pb:disabled{pointer-events:none;opacity:.4;}
+.pb:active{transform:scale(.93);}
+.pb.rock:hover{border-color:var(--rock);box-shadow:0 0 18px rgba(255,85,85,.3);transform:translateY(-3px);}
+.pb.paper:hover{border-color:var(--paper);box-shadow:0 0 18px rgba(85,170,255,.3);transform:translateY(-3px);}
+.pb.scissors:hover{border-color:var(--scissors);box-shadow:0 0 18px rgba(255,221,85,.3);transform:translateY(-3px);}
+.pb.chosen.rock{border-color:var(--rock);background:rgba(255,85,85,.1);box-shadow:0 0 22px rgba(255,85,85,.4);}
+.pb.chosen.paper{border-color:var(--paper);background:rgba(85,170,255,.1);box-shadow:0 0 22px rgba(85,170,255,.4);}
+.pb.chosen.scissors{border-color:var(--scissors);background:rgba(255,221,85,.1);box-shadow:0 0 22px rgba(255,221,85,.4);}
+.pb-icon{font-size:2.4rem;line-height:1;}
+.pb-lbl{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--dim);}
+.pb.rock .pb-lbl{color:var(--rock);}
+.pb.paper .pb-lbl{color:var(--paper);}
+.pb.scissors .pb-lbl{color:var(--scissors);}
+
+.pick-status{text-align:center;font-size:.75rem;letter-spacing:3px;
+  text-transform:uppercase;color:var(--dim);min-height:20px;padding:4px 0;}
+
+/* Taunt row */
+.taunt-row{display:flex;gap:8px;justify-content:center;}
+.taunt-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;font-size:1.2rem;transition:all .2s;}
+.taunt-btn:hover{border-color:var(--dim);transform:scale(1.15);}
+.taunt-toast{font-family:'Bebas Neue',cursive;font-size:.9rem;letter-spacing:2px;
+  color:var(--draw);text-align:center;min-height:20px;animation:fadeIn .3s ease;}
+
+/* History */
+.hist-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;min-height:22px;}
+.hc{width:20px;height:20px;border-radius:50%;font-size:.6rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  animation:chipIn .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes chipIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+.hc.h1{background:rgba(255,107,53,.2);border:1px solid var(--p1);color:var(--p1);}
+.hc.h2{background:rgba(0,212,255,.2);border:1px solid var(--p2);color:var(--p2);}
+.hc.hd{background:rgba(255,215,0,.15);border:1px solid var(--draw);color:var(--draw);}
+
+/* ── GAME OVER ── */
+.go-overlay{position:fixed;inset:0;z-index:200;background:rgba(8,6,14,.96);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;text-align:center;padding:20px;animation:fadeIn .4s ease;}
+.go-overlay.visible{display:flex;}
+.go-trophy{font-size:4.5rem;animation:tFloat 2s ease-in-out infinite;}
+@keyframes tFloat{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-12px) rotate(5deg)}}
+.go-title{font-family:'Bebas Neue',cursive;font-size:clamp(2.5rem,10vw,4rem);
+  letter-spacing:5px;line-height:1;}
+.go-title.you-won{color:var(--win);filter:drop-shadow(0 0 20px var(--win));}
+.go-title.you-lost{color:var(--lose);filter:drop-shadow(0 0 15px var(--lose));}
+.go-title.draw-t{color:var(--draw);filter:drop-shadow(0 0 15px var(--draw));}
+.go-score{font-family:'Bebas Neue',cursive;font-size:2.5rem;display:flex;align-items:center;gap:16px;}
+.gs-p1{color:var(--p1);}
+.gs-sep{color:var(--border);}
+.gs-p2{color:var(--p2);}
+
+.elo-change{display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:12px 22px;}
+.elo-num{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:2px;}
+.elo-num.pos{color:var(--win);}
+.elo-num.neg{color:var(--lose);}
+.elo-lbl{font-size:.65rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;}
+
+.rank-up-banner{background:linear-gradient(135deg,rgba(255,215,0,.1),transparent);
+  border:1px solid var(--draw);border-radius:12px;padding:14px 24px;
+  font-family:'Bebas Neue',cursive;font-size:1.3rem;letter-spacing:3px;color:var(--draw);
+  animation:rankUpPulse 1s ease infinite;}
+@keyframes rankUpPulse{0%,100%{box-shadow:0 0 15px rgba(255,215,0,.2)}50%{box-shadow:0 0 30px rgba(255,215,0,.5)}}
+
+.go-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.rematch-btn{padding:14px 40px;border-radius:40px;border:none;
+  background:linear-gradient(135deg,var(--p1),#ff0080);color:#fff;
+  font-family:'Bebas Neue',cursive;font-size:1.2rem;letter-spacing:3px;
+  cursor:pointer;transition:all .3s;box-shadow:0 0 25px rgba(255,107,53,.3);}
+.rematch-btn:hover{transform:scale(1.05);box-shadow:0 0 40px rgba(255,107,53,.5);}
+.new-match-btn{padding:14px 28px;border-radius:40px;border:1px solid var(--border);
+  background:transparent;color:var(--text);font-family:'Bebas Neue',cursive;
+  font-size:1rem;letter-spacing:3px;cursor:pointer;transition:all .2s;}
+.new-match-btn:hover{border-color:var(--text);background:rgba(255,255,255,.04);}
+.waiting-rematch{font-size:.75rem;letter-spacing:3px;color:var(--dim);
+  text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite;}
+
+/* ── LEADERBOARD ── */
+#lb{padding-top:50px;justify-content:flex-start;gap:14px;}
+.lb-wrap{width:100%;max-width:560px;}
+.lb-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:5px;
+  color:var(--draw);text-align:center;}
+.lb-table{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.lb-row{display:grid;grid-template-columns:40px 1fr auto auto;gap:10px;
+  align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);
+  transition:background .2s;}
+.lb-row:last-child{border-bottom:none;}
+.lb-row:hover{background:rgba(255,255,255,.02);}
+.lb-row.top1{background:rgba(255,215,0,.05);}
+.lb-pos{font-family:'Bebas Neue',cursive;font-size:1.1rem;color:var(--dim);}
+.lb-pos.gold{color:var(--gold);}
+.lb-pos.silver{color:var(--silver);}
+.lb-pos.bronze{color:var(--bronze);}
+.lb-name-col{display:flex;flex-direction:column;gap:2px;}
+.lb-name{font-size:.9rem;letter-spacing:2px;font-weight:700;text-transform:uppercase;}
+.lb-rank-badge{font-size:.6rem;letter-spacing:1px;color:var(--dim);}
+.lb-wr{font-size:.7rem;letter-spacing:1px;color:var(--dim);text-align:right;}
+.lb-elo-num{font-family:'Bebas Neue',cursive;font-size:1.3rem;text-align:right;}
+.back-btn{padding:12px 36px;border-radius:30px;border:1px solid var(--border);
+  background:transparent;color:var(--dim);font-family:'Bebas Neue',cursive;
+  font-size:1rem;letter-spacing:3px;cursor:pointer;transition:all .2s;align-self:center;}
+.back-btn:hover{border-color:var(--text);color:var(--text);}
+
+/* ── DISCONNECT ── */
+.dc-overlay{position:fixed;inset:0;z-index:300;background:rgba(8,6,14,.97);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;text-align:center;padding:20px;}
+.dc-overlay.visible{display:flex;}
+.dc-icon{font-size:4rem;}
+.dc-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:4px;color:var(--lose);}
+.dc-sub{font-size:.8rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;}
+
+/* ── PARTICLES & FX ── */
+.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:999;
+  animation:pFly 1s ease-out forwards;}
+@keyframes pFly{0%{transform:translate(0,0) scale(1);opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}}
+.fx-overlay{position:fixed;inset:0;pointer-events:none;z-index:100;
+  opacity:0;transition:opacity .05s;}
+.toast{position:fixed;top:55px;left:50%;
+  transform:translateX(-50%) translateY(-70px);
+  background:var(--panel);border:1px solid var(--border);border-radius:50px;
+  padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:.95rem;
+  letter-spacing:3px;z-index:500;transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+@media(max-width:440px){
+  .hand{width:78px;height:78px;font-size:3rem;}
+  .pb-icon{font-size:2rem;}
+  .pb{padding:11px 5px 8px;}
+  .hud-sc{font-size:2rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- Online bar -->
+<div class="online-bar">
+  <div class="online-count">
+    <div class="online-dot"></div>
+    <span id="onlineNum">0</span> online
+  </div>
+  <div class="queue-pill" id="queuePill">⚡ <span id="queueNum">0</span> in queue</div>
+  <div class="online-count" id="myEloBar" style="display:none">
+    <span id="myRankIcon">🥉</span>
+    <span id="myEloDisplay">1000</span>
+  </div>
+</div>
+
+<div class="fx-overlay" id="fxOverlay"></div>
+<div class="toast" id="toast"></div>
+
+<!-- ======= SPLASH ======= -->
+<div class="screen active" id="splash">
+  <div class="logo">CLASH</div>
+  <div class="logo-sub">Online · Real Players · Real Stakes</div>
+
+  <div class="rank-display" id="rankDisplay" style="display:none">
+    <div class="rank-icon" id="rankIcon">🥉</div>
+    <div class="rank-info">
+      <div class="rank-name" id="rankName" style="color:var(--bronze)">BRONZE</div>
+      <div class="rank-elo" id="rankElo">ELO: 1000</div>
+    </div>
+  </div>
+
+  <div class="name-row">
+    <input class="name-input" id="nameInput" placeholder="YOUR NAME" maxlength="14" autocomplete="off">
+  </div>
+
+  <button class="play-btn" id="playBtn" onclick="joinQueue()">⚡ FIND MATCH</button>
+  <button class="mini-lb-btn" onclick="showLB()">🏆 LEADERBOARD</button>
+</div>
+
+<!-- ======= QUEUE ======= -->
+<div class="screen" id="queueScreen">
+  <div class="queue-anim"></div>
+  <div class="queue-title">FINDING OPPONENT</div>
+  <div class="queue-sub" id="queueMsg">Searching for a worthy rival...</div>
+  <div class="queue-stats">
+    <div class="q-stat">
+      <div class="q-stat-v" id="qOnline">0</div>
+      <div class="q-stat-l">Online</div>
+    </div>
+    <div class="q-stat">
+      <div class="q-stat-v" id="qWaiting">0</div>
+      <div class="q-stat-l">In Queue</div>
+    </div>
+    <div class="q-stat">
+      <div class="q-stat-v" id="qTime">0s</div>
+      <div class="q-stat-l">Wait</div>
+    </div>
+  </div>
+  <button class="cancel-btn" onclick="leaveQueue()">CANCEL</button>
+</div>
+
+<!-- ======= GAME ======= -->
+<div class="screen" id="game">
+  <div class="g-wrap">
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="p-hud p1-h" id="p1hud">
+        <div class="hud-lbl" id="p1hudName">YOU</div>
+        <div class="hud-sc" id="p1sc">0</div>
+        <div class="prog-dots" id="p1dots"></div>
+        <div class="hud-rank" id="p1rankStr"></div>
+      </div>
+      <div class="c-hud">
+        <div class="c-round">Round</div>
+        <div class="c-rnum" id="roundNum">1</div>
+        <div class="c-target" id="targetStr">First to 3</div>
+      </div>
+      <div class="p-hud p2-h" id="p2hud">
+        <div class="hud-lbl" id="p2hudName">OPP</div>
+        <div class="hud-sc" id="p2sc">0</div>
+        <div class="prog-dots" id="p2dots"></div>
+        <div class="hud-rank" id="p2rankStr"></div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="hist-row" id="histRow"></div>
+
+    <!-- Arena -->
+    <div class="arena">
+      <div class="fighters">
+        <div class="fighter p1-side">
+          <div class="ftr-lbl" id="p1ftrlbl">YOU</div>
+          <div class="hand" id="h1">✊</div>
+          <div style="min-height:14px;font-size:.6rem;letter-spacing:2px;color:var(--dim)" id="p1chose"></div>
+        </div>
+        <div class="fight-mid">
+          <div class="mid-result" id="midResult">⚔️</div>
+          <div class="mid-desc" id="midDesc"></div>
+          <div class="mid-count" id="midCount"></div>
+        </div>
+        <div class="fighter p2-side">
+          <div class="ftr-lbl" id="p2ftrlbl">OPP</div>
+          <div class="hand" id="h2">✊</div>
+          <div style="min-height:14px;font-size:.6rem;letter-spacing:2px;color:var(--dim);text-align:center" id="p2chose"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Picks -->
+    <div class="picks" id="pickGrid">
+      <button class="pb rock" onclick="pick('rock')" id="pb-rock">
+        <div class="pb-icon">✊</div><div class="pb-lbl">Rock</div>
+      </button>
+      <button class="pb paper" onclick="pick('paper')" id="pb-paper">
+        <div class="pb-icon">✋</div><div class="pb-lbl">Paper</div>
+      </button>
+      <button class="pb scissors" onclick="pick('scissors')" id="pb-scissors">
+        <div class="pb-icon">✌️</div><div class="pb-lbl">Scissors</div>
+      </button>
+    </div>
+    <div class="pick-status" id="pickStatus">Choose your weapon</div>
+
+    <!-- Taunts -->
+    <div class="taunt-row">
+      <span style="font-size:.6rem;letter-spacing:2px;color:var(--border)">TAUNT:</span>
+      <button class="taunt-btn" onclick="sendTaunt('😏')">😏</button>
+      <button class="taunt-btn" onclick="sendTaunt('🔥')">🔥</button>
+      <button class="taunt-btn" onclick="sendTaunt('💀')">💀</button>
+      <button class="taunt-btn" onclick="sendTaunt('😤')">😤</button>
+      <button class="taunt-btn" onclick="sendTaunt('👑')">👑</button>
+    </div>
+    <div class="taunt-toast" id="tauntToast"></div>
+  </div>
+</div>
+
+<!-- ======= LEADERBOARD ======= -->
+<div class="screen" id="lb">
+  <div class="lb-wrap">
+    <div class="lb-title">🏆 LEADERBOARD</div>
+    <div class="lb-table" id="lbTable"></div>
+    <button class="back-btn" onclick="showScreen('splash')">← BACK</button>
+  </div>
+</div>
+
+<!-- ======= GAME OVER OVERLAY ======= -->
+<div class="go-overlay" id="goOverlay">
+  <div class="go-trophy" id="goTrophy">🏆</div>
+  <div class="go-title" id="goTitle">YOU WIN!</div>
+  <div class="go-score">
+    <span class="gs-p1" id="goS1">0</span>
+    <span class="gs-sep">—</span>
+    <span class="gs-p2" id="goS2">0</span>
+  </div>
+  <div class="elo-change" id="eloChange">
+    <div class="elo-num" id="eloNum">+16</div>
+    <div class="elo-lbl">ELO<br>CHANGE</div>
+  </div>
+  <div class="rank-up-banner" id="rankUpBanner" style="display:none">⬆️ RANK UP!</div>
+  <div class="go-btns">
+    <button class="rematch-btn" id="rematchBtn" onclick="requestRematch()">🔁 REMATCH</button>
+    <button class="new-match-btn" onclick="findNewMatch()">NEW MATCH</button>
+  </div>
+  <div class="waiting-rematch" id="waitingRematch" style="display:none">Waiting for opponent...</div>
+</div>
+
+<!-- ======= DISCONNECT OVERLAY ======= -->
+<div class="dc-overlay" id="dcOverlay">
+  <div class="dc-icon">📡</div>
+  <div class="dc-title" id="dcTitle">OPPONENT LEFT</div>
+  <div class="dc-sub" id="dcSub">Their connection dropped</div>
+  <button class="new-match-btn" style="margin-top:10px" onclick="findNewMatch()">FIND NEW MATCH</button>
+</div>
+
+<!-- Found match overlay -->
+<div class="found-overlay" id="foundOverlay" style="display:none">
+  <div class="found-title">MATCH FOUND!</div>
+  <div class="found-vs">
+    <div class="found-player">
+      <div style="font-size:2rem" id="foMyRank">🥉</div>
+      <div class="found-name" id="foMyName" style="color:var(--p1)">YOU</div>
+      <div class="found-elo" id="foMyElo">1000 ELO</div>
+    </div>
+    <div class="found-vs-badge">VS</div>
+    <div class="found-player">
+      <div style="font-size:2rem" id="foOppRank">🥉</div>
+      <div class="found-name" id="foOppName" style="color:var(--p2)">OPPONENT</div>
+      <div class="found-elo" id="foOppElo">1000 ELO</div>
+    </div>
+  </div>
+  <div class="found-count" id="foundCount">3</div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const SERVER_URL = window.location.origin; // Same origin when served from Node
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let socket;
+let myPlayerId = null;
+let myName = 'PLAYER';
+let myElo = 1000;
+let myRank = { name:'Bronze', icon:'🥉', color:'#cd7f32' };
+let mySide = null;        // 'p1' or 'p2'
+let oppName = '';
+let oppElo = 1000;
+let roomTarget = 3;
+let myChoice = null;
+let hasChosen = false;
+let queueTimer = null;
+let queueSeconds = 0;
+let gameHistory = [];
+let p1score = 0, p2score = 0;
+let currentRound = 1;
+
+// Persist player across sessions
+function loadLocalData() {
+  try {
+    const d = JSON.parse(localStorage.getItem('clash_player') || '{}');
+    if (d.playerId) myPlayerId = d.playerId;
+    if (d.name) myName = d.name;
+    if (d.elo) myElo = d.elo;
+    document.getElementById('nameInput').value = d.name || '';
+  } catch(e){}
+}
+function saveLocalData() {
+  try {
+    localStorage.setItem('clash_player', JSON.stringify({
+      playerId: myPlayerId, name: myName, elo: myElo
+    }));
+  } catch(e){}
+}
+
+// ─── SOCKET SETUP ──────────────────────────────────────────────────────────
+function connectSocket() {
+  socket = io(SERVER_URL, { transports: ['websocket', 'polling'] });
+
+  socket.on('connect', () => {
+    console.log('Connected:', socket.id);
+    socket.emit('identify', {
+      playerId: myPlayerId,
+      name: myName,
+      elo: myElo
+    });
+  });
+
+  socket.on('identified', (data) => {
+    myPlayerId = data.playerId;
+    myElo = data.elo;
+    myRank = data.rank;
+    updateMyRankUI();
+    saveLocalData();
+  });
+
+  socket.on('onlineCount', (n) => {
+    document.getElementById('onlineNum').textContent = n;
+    document.getElementById('qOnline').textContent = n;
+  });
+
+  socket.on('queueSize', (n) => {
+    document.getElementById('queueNum').textContent = n;
+    document.getElementById('qWaiting').textContent = n;
+    const pill = document.getElementById('queuePill');
+    pill.classList.toggle('visible', n > 0);
+  });
+
+  socket.on('queueJoined', () => {
+    startQueueTimer();
+  });
+
+  socket.on('matchFound', (data) => {
+    stopQueueTimer();
+    mySide = data.yourSide;
+    oppName = data.opponent.name;
+    oppElo = data.opponent.elo;
+    roomTarget = data.target;
+    showFoundMatch(data);
+  });
+
+  socket.on('opponentChose', () => {
+    document.getElementById('p2chose').textContent = hasChosen ? '✓ LOCKED' : '✓ READY';
+    document.getElementById('p2chose').style.color = 'var(--win)';
+    if (!hasChosen) {
+      showToast(`${oppName} has chosen!`, '#ffd700');
+    }
+  });
+
+  socket.on('roundResult', (data) => {
+    showRoundResult(data);
+  });
+
+  socket.on('nextRound', (data) => {
+    currentRound = data.round;
+    resetForNextRound();
+  });
+
+  socket.on('gameOver', (data) => {
+    showGameOver(data);
+  });
+
+  socket.on('taunt', ({ taunt, from }) => {
+    const el = document.getElementById('tauntToast');
+    el.textContent = `${from}: ${taunt}`;
+    setTimeout(() => { el.textContent = ''; }, 3000);
+    showToast(`${from} sent ${taunt}`, '#ffd700');
+  });
+
+  socket.on('opponentWantsRematch', () => {
+    showToast(`${oppName} wants a rematch!`, '#39ff85');
+    document.getElementById('rematchBtn').textContent = '✅ ACCEPT!';
+  });
+
+  socket.on('rematchStarted', () => {
+    startRematch();
+  });
+
+  socket.on('opponentDeclinedRematch', () => {
+    document.getElementById('waitingRematch').textContent = 'Opponent declined. Find a new match?';
+    document.getElementById('rematchBtn').style.display = 'none';
+  });
+
+  socket.on('opponentDisconnected', ({ message }) => {
+    document.getElementById('dcTitle').textContent = 'OPPONENT DISCONNECTED';
+    document.getElementById('dcSub').textContent = message || 'They ran away!';
+    document.getElementById('dcOverlay').classList.add('visible');
+    document.getElementById('goOverlay').classList.remove('visible');
+  });
+
+  socket.on('leaderboard', (data) => {
+    renderLeaderboard(data);
+  });
+
+  socket.on('disconnect', () => {
+    if (isInGame()) {
+      document.getElementById('dcTitle').textContent = 'CONNECTION LOST';
+      document.getElementById('dcSub').textContent = 'Reconnecting...';
+      document.getElementById('dcOverlay').classList.add('visible');
+    }
+  });
+}
+
+// ─── QUEUE ─────────────────────────────────────────────────────────────────
+function joinQueue() {
+  myName = (document.getElementById('nameInput').value.trim().toUpperCase() || 'WARRIOR').substring(0,14);
+  saveLocalData();
+
+  if (!socket || !socket.connected) connectSocket();
+  else {
+    socket.emit('identify', { playerId: myPlayerId, name: myName, elo: myElo });
+    socket.emit('joinQueue');
+    showScreen('queueScreen');
+  }
+
+  // If socket just connected, queue on identify response
+  setTimeout(() => {
+    if (socket && socket.connected && document.getElementById('queueScreen').classList.contains('active')) {
+      socket.emit('joinQueue');
+    }
+  }, 600);
+
+  showScreen('queueScreen');
+}
+
+function leaveQueue() {
+  socket?.emit('leaveQueue');
+  stopQueueTimer();
+  showScreen('splash');
+}
+
+function startQueueTimer() {
+  queueSeconds = 0;
+  clearInterval(queueTimer);
+  queueTimer = setInterval(() => {
+    queueSeconds++;
+    document.getElementById('qTime').textContent = queueSeconds + 's';
+    if (queueSeconds < 10) document.getElementById('queueMsg').textContent = 'Searching for a worthy rival...';
+    else if (queueSeconds < 30) document.getElementById('queueMsg').textContent = 'Still looking... (play vs CPU soon!)';
+    else document.getElementById('queueMsg').textContent = 'Expanding search range...';
+  }, 1000);
+}
+function stopQueueTimer() { clearInterval(queueTimer); }
+
+// ─── MATCH FOUND ───────────────────────────────────────────────────────────
+function showFoundMatch(data) {
+  const fo = document.getElementById('foundOverlay');
+  fo.style.display = 'flex';
+  document.getElementById('foMyName').textContent = myName;
+  document.getElementById('foMyElo').textContent = myElo + ' ELO';
+  document.getElementById('foMyRank').textContent = myRank.icon;
+  document.getElementById('foOppName').textContent = data.opponent.name;
+  document.getElementById('foOppElo').textContent = data.opponent.elo + ' ELO';
+  document.getElementById('foOppRank').textContent = data.opponent.rank.icon;
+
+  let cnt = 3;
+  document.getElementById('foundCount').textContent = cnt;
+  const iv = setInterval(() => {
+    cnt--;
+    if (cnt > 0) {
+      document.getElementById('foundCount').textContent = cnt;
+    } else {
+      clearInterval(iv);
+      fo.style.display = 'none';
+      startGame(data);
+    }
+  }, 800);
+}
+
+function startGame(data) {
+  mySide = data.yourSide;
+  p1score = 0; p2score = 0; currentRound = 1; gameHistory = [];
+
+  const myIsP1 = mySide === 'p1';
+  const p1n = myIsP1 ? myName : oppName;
+  const p2n = myIsP1 ? oppName : myName;
+
+  document.getElementById('p1hudName').textContent = p1n;
+  document.getElementById('p2hudName').textContent = p2n;
+  document.getElementById('p1ftrlbl').textContent = p1n;
+  document.getElementById('p2ftrlbl').textContent = p2n;
+  document.getElementById('p1rankStr').textContent = myIsP1 ? `${myRank.icon} ${myElo}` : `${data.opponent.rank.icon} ${oppElo}`;
+  document.getElementById('p2rankStr').textContent = myIsP1 ? `${data.opponent.rank.icon} ${oppElo}` : `${myRank.icon} ${myElo}`;
+  document.getElementById('roundNum').textContent = 1;
+  document.getElementById('targetStr').textContent = `First to ${roomTarget}`;
+  document.getElementById('histRow').innerHTML = '';
+  document.getElementById('goOverlay').classList.remove('visible');
+  document.getElementById('dcOverlay').classList.remove('visible');
+
+  buildDots('p1dots', 0, roomTarget, 'f1');
+  buildDots('p2dots', 0, roomTarget, 'f2');
+
+  resetHandsIdle();
+  showScreen('game');
+}
+
+// ─── PICK ──────────────────────────────────────────────────────────────────
+function pick(choice) {
+  if (hasChosen) return;
+  myChoice = choice;
+  ['rock','paper','scissors'].forEach(c => {
+    document.getElementById('pb-'+c).classList.toggle('chosen', c===choice);
+  });
+  document.getElementById('pickStatus').textContent = '🔒 Locked in — waiting for opponent...';
+  document.getElementById('p1chose').textContent = mySide === 'p1' ? '✓ LOCKED' : '';
+  hasChosen = true;
+
+  // Disable after small delay (prevent double-click)
+  setTimeout(() => {
+    ['rock','paper','scissors'].forEach(c => {
+      document.getElementById('pb-'+c).disabled = true;
+    });
+  }, 100);
+
+  socket.emit('makeChoice', { choice });
+}
+
+// ─── ROUND RESULT ──────────────────────────────────────────────────────────
+const BEATS = { rock:'scissors', paper:'rock', scissors:'paper' };
+const EMOJIS = { rock:'✊', paper:'✋', scissors:'✌️' };
+
+function showRoundResult(data) {
+  const { p1Choice, p2Choice, result, p1Score, p2Score } = data;
+  p1score = p1Score; p2score = p2Score;
+
+  // Show hands
+  const h1 = document.getElementById('h1');
+  const h2 = document.getElementById('h2');
+  h1.textContent = EMOJIS[p1Choice];
+  h2.textContent = EMOJIS[p2Choice];
+  h1.className = 'hand reveal';
+  h2.className = 'hand reveal';
+
+  const mr = document.getElementById('midResult');
+  const md = document.getElementById('midDesc');
+  document.getElementById('midCount').textContent = '';
+  document.getElementById('p1chose').textContent = '';
+  document.getElementById('p2chose').textContent = '';
+
+  const myIsP1 = mySide === 'p1';
+  const myChoice2 = myIsP1 ? p1Choice : p2Choice;
+  const oppChoice = myIsP1 ? p2Choice : p1Choice;
+  const iWon = (result === 'p1' && myIsP1) || (result === 'p2' && !myIsP1);
+  const iLost = (result !== 'draw') && !iWon;
+
+  setTimeout(() => {
+    if (result === 'draw') {
+      h1.classList.add('glow-draw'); h2.classList.add('glow-draw');
+      mr.textContent = 'DRAW'; mr.className = 'mid-result rdraw pop';
+      md.textContent = `Both chose ${p1Choice}`;
+      flash('rgba(255,215,0,.07)');
+      gameHistory.push('d');
+    } else {
+      const winnerIsP1 = result === 'p1';
+      const winH = winnerIsP1 ? h1 : h2;
+      const losH = winnerIsP1 ? h2 : h1;
+      winH.classList.add('winner-h', winnerIsP1 ? 'glow-p1' : 'glow-p2');
+      losH.classList.add('loser-h');
+
+      if (iWon) {
+        mr.textContent = 'WIN!'; mr.className = 'mid-result rp1 pop';
+        flash('rgba(255,107,53,.1)');
+        spawnParticles(winH, '#ff6b35');
+        gameHistory.push(myIsP1 ? '1' : '2');
+      } else {
+        mr.textContent = 'LOSE'; mr.className = 'mid-result rp2 pop';
+        flash('rgba(0,212,255,.08)');
+        shakeEl(document.querySelector('.g-wrap'));
+        gameHistory.push(myIsP1 ? '2' : '1');
+      }
+      const winnerChoice = winnerIsP1 ? p1Choice : p2Choice;
+      const loserChoice = winnerIsP1 ? p2Choice : p1Choice;
+      md.textContent = `${winnerChoice} beats ${loserChoice}`;
+    }
+
+    // Update scores
+    updateScoreUI();
+    addHistChip(gameHistory[gameHistory.length-1]);
+
+  }, 300);
+}
+
+function resetForNextRound() {
+  myChoice = null; hasChosen = false;
+  document.getElementById('roundNum').textContent = currentRound;
+  document.getElementById('midResult').textContent = '⚔️';
+  document.getElementById('midResult').className = 'mid-result';
+  document.getElementById('midDesc').textContent = '';
+  document.getElementById('midCount').textContent = '';
+  document.getElementById('pickStatus').textContent = 'Choose your weapon';
+  document.getElementById('p1chose').textContent = '';
+  document.getElementById('p2chose').textContent = '';
+  resetHandsIdle();
+  enablePicks();
+}
+
+function resetHandsIdle() {
+  const h1 = document.getElementById('h1');
+  const h2 = document.getElementById('h2');
+  h1.textContent = '✊'; h1.className = 'hand p1-side';
+  h2.textContent = '✊'; h2.className = 'hand p2-side';
+}
+function enablePicks() {
+  ['rock','paper','scissors'].forEach(c => {
+    const b = document.getElementById('pb-'+c);
+    b.disabled = false;
+    b.classList.remove('chosen');
+  });
+}
+
+// ─── GAME OVER ─────────────────────────────────────────────────────────────
+function showGameOver(data) {
+  const iWon = (data.yourSide === 'p1' && data.winner === 'p1') ||
+               (data.yourSide === 'p2' && data.winner === 'p2');
+  const isDraw = data.winner === 'draw';
+
+  const title = document.getElementById('goTitle');
+  const trophy = document.getElementById('goTrophy');
+
+  if (iWon) {
+    title.textContent = '🏆 YOU WIN!'; title.className = 'go-title you-won';
+    trophy.textContent = '🏆'; spawnMassParticles('#ff6b35');
+  } else {
+    title.textContent = '💀 YOU LOSE'; title.className = 'go-title you-lost';
+    trophy.textContent = '💀';
+  }
+
+  document.getElementById('goS1').textContent = data.p1Score;
+  document.getElementById('goS2').textContent = data.p2Score;
+
+  const eloChange = data.eloChange;
+  const eloEl = document.getElementById('eloNum');
+  eloEl.textContent = eloChange >= 0 ? '+' + eloChange : eloChange;
+  eloEl.className = 'elo-num ' + (eloChange >= 0 ? 'pos' : 'neg');
+  myElo = data.newElo;
+
+  // Rank up?
+  const oldRankName = myRank.name;
+  myRank = data.newRank;
+  if (myRank.name !== oldRankName && iWon) {
+    document.getElementById('rankUpBanner').textContent = `⬆️ RANK UP: ${myRank.icon} ${myRank.name}!`;
+    document.getElementById('rankUpBanner').style.display = 'block';
+  } else {
+    document.getElementById('rankUpBanner').style.display = 'none';
+  }
+
+  updateMyRankUI();
+  saveLocalData();
+
+  document.getElementById('waitingRematch').style.display = 'none';
+  document.getElementById('rematchBtn').style.display = 'block';
+  document.getElementById('rematchBtn').textContent = '🔁 REMATCH';
+  document.getElementById('goOverlay').classList.add('visible');
+}
+
+function requestRematch() {
+  socket?.emit('rematch');
+  document.getElementById('waitingRematch').style.display = 'block';
+  document.getElementById('waitingRematch').textContent = 'Waiting for opponent...';
+}
+
+function startRematch() {
+  p1score = 0; p2score = 0; currentRound = 1; gameHistory = [];
+  document.getElementById('goOverlay').classList.remove('visible');
+  document.getElementById('histRow').innerHTML = '';
+  updateScoreUI();
+  resetForNextRound();
+  showToast('🔁 REMATCH!', '#39ff85');
+}
+
+function findNewMatch() {
+  document.getElementById('goOverlay').classList.remove('visible');
+  document.getElementById('dcOverlay').classList.remove('visible');
+  socket?.emit('declineRematch');
+  joinQueue();
+}
+
+// ─── TAUNTS ────────────────────────────────────────────────────────────────
+function sendTaunt(t) {
+  socket?.emit('sendTaunt', { taunt: t });
+  showToast('Taunt sent ' + t, '#ffd700');
+}
+
+// ─── LEADERBOARD ───────────────────────────────────────────────────────────
+function showLB() {
+  socket?.emit('getLeaderboard');
+  showScreen('lb');
+}
+
+function renderLeaderboard(data) {
+  const table = document.getElementById('lbTable');
+  if (!data || data.length === 0) {
+    table.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim);font-size:.8rem;letter-spacing:2px">NO PLAYERS YET — BE THE FIRST!</div>';
+    return;
+  }
+  table.innerHTML = data.map((p, i) => {
+    const posClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const posTxt = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    const wr = p.wins + p.losses > 0 ? Math.round(p.wins/(p.wins+p.losses)*100) : 0;
+    return `<div class="lb-row ${i===0?'top1':''}">
+      <div class="lb-pos ${posClass}">${posTxt}</div>
+      <div class="lb-name-col">
+        <div class="lb-name" style="color:${p.rank.color}">${p.name}</div>
+        <div class="lb-rank-badge">${p.rank.icon} ${p.rank.name} · ${p.streak}🔥 best streak</div>
+      </div>
+      <div>
+        <div class="lb-elo-num" style="color:${p.rank.color}">${p.elo}</div>
+        <div class="lb-wr">${p.wins}W/${p.losses}L</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── UI HELPERS ────────────────────────────────────────────────────────────
+function updateMyRankUI() {
+  document.getElementById('rankDisplay').style.display = myPlayerId ? 'flex' : 'none';
+  document.getElementById('rankIcon').textContent = myRank.icon;
+  document.getElementById('rankName').textContent = myRank.name;
+  document.getElementById('rankName').style.color = myRank.color;
+  document.getElementById('rankElo').textContent = 'ELO: ' + myElo;
+  document.getElementById('myEloBar').style.display = 'flex';
+  document.getElementById('myRankIcon').textContent = myRank.icon;
+  document.getElementById('myEloDisplay').textContent = myElo;
+}
+
+function updateScoreUI() {
+  const s1 = document.getElementById('p1sc');
+  const s2 = document.getElementById('p2sc');
+  s1.textContent = p1score; s2.textContent = p2score;
+  s1.classList.remove('bump'); void s1.offsetWidth; s1.classList.add('bump');
+  s2.classList.remove('bump'); void s2.offsetWidth; s2.classList.add('bump');
+  buildDots('p1dots', p1score, roomTarget, 'f1');
+  buildDots('p2dots', p2score, roomTarget, 'f2');
+}
+
+function buildDots(id, score, max, cls) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  for (let i = 0; i < max; i++) {
+    const d = document.createElement('div');
+    d.className = 'pd' + (i < score ? ' ' + cls : '');
+    el.appendChild(d);
+  }
+}
+
+function addHistChip(r) {
+  const row = document.getElementById('histRow');
+  const c = document.createElement('div');
+  c.className = `hc ${r==='1'?'h1':r==='2'?'h2':'hd'}`;
+  c.textContent = r==='1'?'W1':r==='2'?'W2':'D';
+  // Label from my perspective
+  const myIsP1 = mySide === 'p1';
+  if (r === 'd') c.textContent = 'D';
+  else if ((r === '1' && myIsP1) || (r === '2' && !myIsP1)) { c.className = 'hc h1'; c.textContent = 'WIN'; }
+  else { c.className = 'hc h2'; c.textContent = 'LOSE'; }
+  row.appendChild(c);
+  if (row.children.length > 15) row.removeChild(row.firstChild);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function isInGame() {
+  return document.getElementById('game').classList.contains('active');
+}
+
+// ─── FX ─────────────────────────────────────────────────────────────────────
+function flash(color) {
+  const el = document.getElementById('fxOverlay');
+  el.style.background = color; el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 200);
+}
+
+function shakeEl(el) {
+  el.style.animation = 'none'; void el.offsetWidth;
+  el.style.animation = 'shk .35s ease';
+  setTimeout(() => el.style.animation = '', 400);
+}
+
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}';
+document.head.appendChild(shakeStyle);
+
+function spawnParticles(anchor, color) {
+  const rect = anchor.getBoundingClientRect();
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 4 + Math.random()*8;
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 60 + Math.random() * 90;
+    p.style.cssText = `width:${size}px;height:${size}px;background:${color};left:${cx}px;top:${cy}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;animation-duration:${.6+Math.random()*.5}s;box-shadow:0 0 6px ${color};`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1200);
+  }
+}
+
+function spawnMassParticles(color) {
+  const colors = [color, '#fff', '#ffd700', '#00d4ff'];
+  for (let i = 0; i < 45; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const c = colors[Math.floor(Math.random()*colors.length)];
+      const size = 5 + Math.random()*10;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 100 + Math.random() * 260;
+      const sx = window.innerWidth/2 + (Math.random()-.5)*400;
+      const sy = window.innerHeight/2 + (Math.random()-.5)*250;
+      p.style.cssText = `width:${size}px;height:${size}px;background:${c};left:${sx}px;top:${sy}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;animation-duration:${.8+Math.random()*.8}s;box-shadow:0 0 8px ${c};`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1800);
+    }, i * 28);
+  }
+}
+
+let toastTmr;
+function showToast(msg, color='#39ff85') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.color = color; t.style.borderColor = color;
+  t.classList.add('show');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+loadLocalData();
+connectSocket();
+</script>
+</body>
+</html>
