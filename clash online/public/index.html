@@ -621,6 +621,7 @@ let gameHistory=[], p1score=0, p2score=0, currentRound=1;
 let isCPUMode=false, cpuDifficulty='easy', cpuHistory=[];
 let soundEnabled=true;
 let audioCtx=null;
+let gameId=0; // increments on every new game — old timers check this and abort
 
 // ── SOUND ENGINE (Web Audio API) ─────────────────────────────────────────────
 function getAudio(){
@@ -726,6 +727,8 @@ function showDiffScreen(){
 }
 
 function startCPU(diff){
+  gameId++; // kill all pending timers from previous game
+  const gid=gameId;
   cpuDifficulty=diff; isCPUMode=true; cpuHistory=[];
   p1score=0; p2score=0; currentRound=1; gameHistory=[];
   myChoice=null; hasChosen=false;
@@ -901,23 +904,30 @@ function pick(choice){
   if(hasChosen) return;
   playPick();
   myChoice=choice;
-  CHOICES.forEach(c=>document.getElementById('pb-'+c).classList.toggle('chosen',c===choice));
+  hasChosen=true;
+  CHOICES.forEach(c=>{
+    const b=document.getElementById('pb-'+c);
+    b.disabled=true;
+    b.classList.toggle('chosen',c===choice);
+  });
   document.getElementById('pickStatus').textContent='🔒 Locked in!';
   document.getElementById('p1status').textContent='✓ LOCKED';
   document.getElementById('p1status').className='opp-status ready';
-  hasChosen=true;
-  setTimeout(()=>CHOICES.forEach(c=>document.getElementById('pb-'+c).disabled=true),100);
 
   if(isCPUMode){
-    // CPU thinks for a moment then responds
+    const gid=gameId;
     document.getElementById('p2status').textContent='🤔 thinking...';
-    setTimeout(()=>{ resolveCPURound(choice); }, 600+Math.random()*400);
+    setTimeout(()=>{
+      if(gameId!==gid) return; // game changed — abort
+      resolveCPURound(choice);
+    }, 600+Math.random()*400);
   } else {
     socket.emit('makeChoice',{choice});
   }
 }
 
 function resolveCPURound(yourChoice){
+  const gid=gameId;
   const cpuChoice=getCPUChoice(yourChoice);
   let result;
   if(yourChoice===cpuChoice) result='draw';
@@ -927,28 +937,19 @@ function resolveCPURound(yourChoice){
   if(result==='p1') p1score++;
   else if(result==='p2') p2score++;
 
-  showRoundResult({
-    p1Choice:yourChoice,
-    p2Choice:cpuChoice,
-    result,
-    p1Score:p1score,
-    p2Score:p2score
-  });
+  showRoundResult({p1Choice:yourChoice,p2Choice:cpuChoice,result,p1Score:p1score,p2Score:p2score});
 
   if(p1score>=WIN_TARGET||p2score>=WIN_TARGET){
     setTimeout(()=>{
-      showGameOver({
-        yourSide:'p1',
-        winner:p1score>=WIN_TARGET?'p1':'p2',
-        p1Score:p1score,
-        p2Score:p2score,
-        eloChange:null,
-        isCPU:true
-      });
+      if(gameId!==gid) return;
+      showGameOver({yourSide:'p1',winner:p1score>=WIN_TARGET?'p1':'p2',p1Score:p1score,p2Score:p2score,eloChange:null,isCPU:true});
     },900);
   } else {
     currentRound++;
-    setTimeout(()=>resetForNext(),900);
+    setTimeout(()=>{
+      if(gameId!==gid) return;
+      resetForNext();
+    },900);
   }
 }
 
@@ -1085,7 +1086,7 @@ function showGameOver(data){
 function handleRematch(){
   if(isCPUMode){
     document.getElementById('goOverlay').classList.remove('visible');
-    startCPU(cpuDifficulty);
+    startCPU(cpuDifficulty); // startCPU already increments gameId
   } else {
     socket?.emit('rematch');
     document.getElementById('waitingRematch').style.display='block';
