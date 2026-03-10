@@ -728,6 +728,7 @@ function showDiffScreen(){
 function startCPU(diff){
   cpuDifficulty=diff; isCPUMode=true; cpuHistory=[];
   p1score=0; p2score=0; currentRound=1; gameHistory=[];
+  myChoice=null; hasChosen=false;
   const diffNames={easy:'🤖 EASY CPU',medium:'🤖 MEDIUM CPU',hard:'😤 HARD CPU',impossible:'💀 IMPOSSIBLE CPU'};
   oppName=diffNames[diff];
   setupGameUI(false);
