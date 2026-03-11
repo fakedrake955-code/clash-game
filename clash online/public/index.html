@@ -955,6 +955,7 @@ function resolveCPURound(yourChoice){
 
 // ── ROUND RESULT ──────────────────────────────────────────────────────────────
 function showRoundResult(data){
+  const gid=gameId;
   const {p1Choice,p2Choice,result,p1Score,p2Score}=data;
   if(!isCPUMode){ p1score=p1Score; p2score=p2Score; }
 
@@ -973,6 +974,7 @@ function showRoundResult(data){
   const iWon=(result==='p1'&&myIsP1)||(result==='p2'&&!myIsP1);
 
   setTimeout(()=>{
+    if(gameId!==gid) return; // new game started — abort!
     if(result==='draw'){
       h1.classList.add('glow-draw'); h2.classList.add('glow-draw');
       mr.textContent='DRAW'; mr.className='mid-result rdraw pop';
