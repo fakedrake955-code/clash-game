@@ -370,6 +370,88 @@ body::after{content:'';position:fixed;inset:0;
   .hud-sc{font-size:2rem;}
   .mode-grid{grid-template-columns:1fr 1fr;}
 }
+
+/* ── HTP SLIDES ─────────────────────────────────────────── */
+.htp-slides{width:100%;max-width:400px;}
+.htp-slide{display:none;flex-direction:column;align-items:center;gap:14px;text-align:center;animation:slideIn .3s ease;}
+.htp-slide.active{display:flex;}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.htp-slide-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:5px;
+  background:linear-gradient(135deg,var(--p1),var(--p2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.htp-battle{display:flex;align-items:center;justify-content:center;gap:16px;
+  background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:24px 20px;width:100%;}
+.htp-hand{font-size:3.5rem;transition:all .4s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));}
+.htp-hand.h-win{transform:scale(1.25) rotate(-5deg);filter:drop-shadow(0 0 20px var(--win)) drop-shadow(0 4px 10px rgba(0,0,0,.5));}
+.htp-hand.h-lose{transform:scale(0.75) rotate(10deg);opacity:.35;filter:grayscale(1);}
+.htp-vs{font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--border);letter-spacing:2px;}
+.htp-result-badge{font-family:'Bebas Neue',cursive;font-size:1.4rem;letter-spacing:3px;
+  padding:8px 22px;border-radius:30px;background:linear-gradient(135deg,rgba(57,255,133,.15),rgba(57,255,133,.05));
+  border:1px solid var(--win);color:var(--win);animation:badgePop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes badgePop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.htp-caption{font-size:.85rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;}
+.htp-caption span{color:var(--p1);font-weight:700;}
+.htp-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.htp-feat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center;}
+.htp-feat-icon{font-size:1.8rem;margin-bottom:6px;}
+.htp-feat-title{font-family:'Bebas Neue',cursive;font-size:1rem;letter-spacing:2px;color:var(--p1);margin-bottom:4px;}
+.htp-feat-desc{font-size:.65rem;letter-spacing:1px;color:var(--dim);}
+.htp-dots{display:flex;gap:8px;}
+.htp-dot{width:10px;height:10px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s;}
+.htp-dot.active{background:var(--p1);box-shadow:0 0 8px var(--p1);}
+.htp-nav{display:flex;gap:12px;align-items:center;}
+.htp-prev{padding:10px 24px;border-radius:30px;border:1px solid var(--border);background:transparent;
+  color:var(--dim);font-family:'Bebas Neue',cursive;font-size:1rem;letter-spacing:2px;cursor:pointer;transition:all .2s;}
+.htp-prev:hover{border-color:var(--text);color:var(--text);}
+.htp-next{padding:12px 36px;border-radius:30px;border:none;background:linear-gradient(135deg,var(--p1),#ff0080);
+  color:#fff;font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:3px;cursor:pointer;
+  transition:all .2s;box-shadow:0 0 20px rgba(255,107,53,.3);}
+.htp-next:hover{transform:scale(1.05);}
+.htp-skip{font-size:.7rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;transition:color .2s;}
+.htp-skip:hover{color:var(--text);}
+
+/* ── STREAK BANNER ──────────────────────────────────────── */
+.streak-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-100px);
+  background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(255,0,128,.15));
+  border:1px solid var(--p1);border-radius:50px;padding:10px 28px;z-index:400;
+  display:flex;align-items:center;gap:10px;transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 0 30px rgba(255,107,53,.3);}
+.streak-banner.show{transform:translateX(-50%) translateY(0);}
+.streak-fire{font-size:1.5rem;animation:firePulse .5s ease-in-out infinite alternate;}
+@keyframes firePulse{from{transform:scale(1)}to{transform:scale(1.2)}}
+.streak-text{font-family:'Bebas Neue',cursive;font-size:1.2rem;letter-spacing:3px;color:var(--p1);}
+
+/* ── ACHIEVEMENT POPUP ──────────────────────────────────── */
+.ach-popup{position:fixed;bottom:20px;right:20px;transform:translateX(120%);
+  background:linear-gradient(135deg,var(--panel),rgba(255,107,53,.1));
+  border:1px solid var(--p1);border-radius:16px;padding:14px 18px;z-index:400;
+  display:flex;align-items:center;gap:12px;transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 0 30px rgba(255,107,53,.2);max-width:260px;}
+.ach-popup.show{transform:translateX(0);}
+.ach-icon{font-size:2rem;}
+.ach-info{display:flex;flex-direction:column;gap:2px;}
+.ach-label{font-size:.55rem;letter-spacing:3px;color:var(--p1);text-transform:uppercase;}
+.ach-title{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:2px;color:var(--text);}
+.ach-desc{font-size:.65rem;letter-spacing:1px;color:var(--dim);}
+
+/* ── DAILY CHALLENGE ────────────────────────────────────── */
+.daily-bar{display:flex;align-items:center;gap:12px;background:var(--panel);
+  border:1px solid var(--border);border-radius:14px;padding:12px 16px;width:100%;max-width:420px;
+  position:relative;overflow:hidden;}
+.daily-bar::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,215,0,.04),transparent);pointer-events:none;}
+.daily-icon{font-size:1.8rem;flex-shrink:0;}
+.daily-info{flex:1;display:flex;flex-direction:column;gap:4px;}
+.daily-title{font-family:'Bebas Neue',cursive;font-size:.9rem;letter-spacing:2px;color:var(--draw);}
+.daily-desc{font-size:.65rem;letter-spacing:1px;color:var(--dim);}
+.daily-prog-wrap{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.daily-prog{height:100%;background:linear-gradient(90deg,var(--draw),var(--p1));border-radius:2px;
+  transition:width .5s ease;min-width:4px;}
+.daily-reward{font-family:'Bebas Neue',cursify;font-family:'Bebas Neue',cursive;font-size:1rem;letter-spacing:1px;
+  color:var(--draw);text-align:right;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,215,0,.4));}
+
+/* ── IN-GAME STREAK HUD ─────────────────────────────────── */
+.streak-hud{font-family:'Bebas Neue',cursive;font-size:.75rem;letter-spacing:2px;color:var(--p1);
+  min-height:14px;animation:fls .5s ease;}
 </style>
 </head>
 <body>
