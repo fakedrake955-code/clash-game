@@ -196,18 +196,29 @@ body::after{content:'';position:fixed;inset:0;
 .ftr-lbl{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;}
 .p1-side .ftr-lbl{color:var(--p1);}
 .p2-side .ftr-lbl{color:var(--p2);}
-.hand{width:90px;height:90px;border-radius:16px;display:flex;align-items:center;justify-content:center;
-  font-size:3.6rem;border:2px solid var(--border);background:rgba(10,8,20,.8);transition:all .3s;position:relative;}
-.p1-side .hand{border-color:rgba(255,107,53,.3);}
-.p2-side .hand{border-color:rgba(0,212,255,.3);}
+.hand{width:96px;height:96px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:3.4rem;border:2px solid var(--border);background:rgba(10,8,20,.8);transition:all .3s;position:relative;overflow:hidden;}
+.hand::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.05),transparent);pointer-events:none;}
+.hand-lbl{font-size:.45rem;letter-spacing:3px;text-transform:uppercase;font-family:'Bebas Neue',cursive;font-size:.6rem;line-height:1;opacity:.6;}
+.p1-side .hand{border-color:rgba(255,107,53,.4);background:linear-gradient(160deg,rgba(255,107,53,.08),rgba(10,8,20,.9));}
+.p1-side .hand-lbl{color:var(--p1);}
+.p2-side .hand{border-color:rgba(0,212,255,.4);background:linear-gradient(160deg,rgba(0,212,255,.08),rgba(10,8,20,.9));}
+.p2-side .hand-lbl{color:var(--p2);}
+/* colour tint when a choice is shown */
+.hand.showing-rock{border-color:var(--rock);background:linear-gradient(160deg,rgba(255,85,85,.15),rgba(10,8,20,.9));}
+.hand.showing-paper{border-color:var(--paper);background:linear-gradient(160deg,rgba(85,170,255,.15),rgba(10,8,20,.9));}
+.hand.showing-scissors{border-color:var(--scissors);background:linear-gradient(160deg,rgba(255,221,85,.15),rgba(10,8,20,.9));}
 .hand.reveal{animation:hReveal .5s cubic-bezier(.34,1.56,.64,1) forwards;}
 @keyframes hReveal{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
 .hand.winner-h{animation:wPop .7s cubic-bezier(.34,1.56,.64,1) forwards;}
-@keyframes wPop{0%{transform:scale(1)}50%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1.08)}}
-.hand.loser-h{opacity:.25;filter:grayscale(1);transform:scale(.9);}
-.hand.glow-p1{box-shadow:0 0 28px var(--p1g),0 0 60px rgba(255,107,53,.12);border-color:var(--p1);}
-.hand.glow-p2{box-shadow:0 0 28px var(--p2g),0 0 60px rgba(0,212,255,.12);border-color:var(--p2);}
-.hand.glow-draw{box-shadow:0 0 18px rgba(255,215,0,.3);border-color:var(--draw);}
+@keyframes wPop{0%{transform:scale(1)}50%{transform:scale(1.25) rotate(5deg)}100%{transform:scale(1.1)}}
+.hand.loser-h{opacity:.2;filter:grayscale(1) blur(1px);transform:scale(.86);}
+.hand.glow-p1{box-shadow:0 0 32px var(--p1g),0 0 70px rgba(255,107,53,.15);border-color:var(--p1);}
+.hand.glow-p2{box-shadow:0 0 32px var(--p2g),0 0 70px rgba(0,212,255,.15);border-color:var(--p2);}
+.hand.glow-draw{box-shadow:0 0 22px rgba(255,215,0,.35);border-color:var(--draw);}
+/* Idle bob animation */
+.hand.idle{animation:idleBob 2s ease-in-out infinite;}
+@keyframes idleBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .fight-mid{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:70px;}
 .mid-result{font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:2px;min-height:34px;display:flex;align-items:center;justify-content:center;transition:all .3s;}
 .mid-result.rp1{color:var(--p1);filter:drop-shadow(0 0 8px var(--p1g));}
@@ -236,12 +247,31 @@ body::after{content:'';position:fixed;inset:0;
 .pb.chosen.rock{border-color:var(--rock);background:rgba(255,85,85,.1);box-shadow:0 0 22px rgba(255,85,85,.4);}
 .pb.chosen.paper{border-color:var(--paper);background:rgba(85,170,255,.1);box-shadow:0 0 22px rgba(85,170,255,.4);}
 .pb.chosen.scissors{border-color:var(--scissors);background:rgba(255,221,85,.1);box-shadow:0 0 22px rgba(255,221,85,.4);}
-.pb-icon{font-size:2.3rem;line-height:1;}
+.pb-icon{font-size:2.5rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));transition:transform .2s;}
+.pb:hover .pb-icon{transform:scale(1.15) translateY(-2px);}
 .pb-lbl{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--dim);}
 .pb.rock .pb-lbl{color:var(--rock);}
 .pb.paper .pb-lbl{color:var(--paper);}
 .pb.scissors .pb-lbl{color:var(--scissors);}
+/* Coloured background tints per weapon */
+.pb.rock{background:linear-gradient(160deg,rgba(255,85,85,.07),rgba(16,13,26,.8));}
+.pb.paper{background:linear-gradient(160deg,rgba(85,170,255,.07),rgba(16,13,26,.8));}
+.pb.scissors{background:linear-gradient(160deg,rgba(255,221,85,.07),rgba(16,13,26,.8));}
+/* Pulse ring on idle */
+.pb.pulse-hint{animation:pbPulse 1.2s ease-in-out infinite;}
+@keyframes pbPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,0)}50%{box-shadow:0 0 0 6px rgba(255,107,53,.25)}}
 .pick-status{text-align:center;font-size:.75rem;letter-spacing:3px;text-transform:uppercase;color:var(--dim);min-height:20px;padding:4px 0;}
+
+/* IN-GAME TOOLTIP */
+.game-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(255,0,128,.15));
+  border:1px solid var(--p1);border-radius:12px;padding:8px 16px;white-space:nowrap;
+  font-family:'Bebas Neue',cursive;font-size:.85rem;letter-spacing:2px;color:var(--text);z-index:50;
+  animation:tipBounce 1s ease-in-out infinite;}
+@keyframes tipBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+.game-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:var(--p1);}
+.picks-wrap{position:relative;}
 
 /* TAUNT */
 .taunt-row{display:flex;gap:8px;justify-content:center;align-items:center;}
@@ -361,34 +391,103 @@ body::after{content:'';position:fixed;inset:0;
 <div class="fx-overlay" id="fxOverlay"></div>
 <div class="toast" id="toast"></div>
 
-<!-- HOW TO PLAY -->
+<!-- HOW TO PLAY — ANIMATED SLIDES -->
 <div class="htp-overlay" id="htpOverlay">
-  <div class="htp-title">HOW TO PLAY</div>
-  <div class="htp-grid">
-    <div class="htp-card">
-      <div class="htp-emoji">✊</div>
-      <div class="htp-name" style="color:var(--rock)">ROCK</div>
-      <div class="htp-beats">Beats Scissors</div>
+  <div class="htp-slides">
+
+    <!-- SLIDE 1: Rock beats Scissors -->
+    <div class="htp-slide active" id="htpSlide0">
+      <div class="htp-slide-title">✊ ROCK</div>
+      <div class="htp-battle">
+        <div class="htp-hand h-left" id="hs1L">✊</div>
+        <div class="htp-vs">VS</div>
+        <div class="htp-hand h-right" id="hs1R">✌️</div>
+      </div>
+      <div class="htp-result-badge win" id="hs1Badge">✊ WINS!</div>
+      <div class="htp-caption">Rock <span>SMASHES</span> Scissors</div>
     </div>
-    <div class="htp-card">
-      <div class="htp-emoji">✋</div>
-      <div class="htp-name" style="color:var(--paper)">PAPER</div>
-      <div class="htp-beats">Beats Rock</div>
+
+    <!-- SLIDE 2: Paper beats Rock -->
+    <div class="htp-slide" id="htpSlide1">
+      <div class="htp-slide-title">✋ PAPER</div>
+      <div class="htp-battle">
+        <div class="htp-hand h-left" id="hs2L">✋</div>
+        <div class="htp-vs">VS</div>
+        <div class="htp-hand h-right" id="hs2R">✊</div>
+      </div>
+      <div class="htp-result-badge win" id="hs2Badge">✋ WINS!</div>
+      <div class="htp-caption">Paper <span>COVERS</span> Rock</div>
     </div>
-    <div class="htp-card">
-      <div class="htp-emoji">✌️</div>
-      <div class="htp-name" style="color:var(--scissors)">SCISSORS</div>
-      <div class="htp-beats">Beats Paper</div>
+
+    <!-- SLIDE 3: Scissors beats Paper -->
+    <div class="htp-slide" id="htpSlide2">
+      <div class="htp-slide-title">✌️ SCISSORS</div>
+      <div class="htp-battle">
+        <div class="htp-hand h-left" id="hs3L">✌️</div>
+        <div class="htp-vs">VS</div>
+        <div class="htp-hand h-right" id="hs3R">✋</div>
+      </div>
+      <div class="htp-result-badge win" id="hs3Badge">✌️ WINS!</div>
+      <div class="htp-caption">Scissors <span>CUTS</span> Paper</div>
     </div>
+
+    <!-- SLIDE 4: How to win + addiction -->
+    <div class="htp-slide" id="htpSlide3">
+      <div class="htp-slide-title">⚡ HOW TO WIN</div>
+      <div class="htp-feature-grid">
+        <div class="htp-feat">
+          <div class="htp-feat-icon">🎯</div>
+          <div class="htp-feat-title">FIRST TO 3</div>
+          <div class="htp-feat-desc">Win 3 rounds to win the match</div>
+        </div>
+        <div class="htp-feat">
+          <div class="htp-feat-icon">🔥</div>
+          <div class="htp-feat-title">STREAKS</div>
+          <div class="htp-feat-desc">Win in a row for bonus ELO</div>
+        </div>
+        <div class="htp-feat">
+          <div class="htp-feat-icon">🏆</div>
+          <div class="htp-feat-title">CLIMB RANKS</div>
+          <div class="htp-feat-desc">Bronze → Gold → Legend</div>
+        </div>
+        <div class="htp-feat">
+          <div class="htp-feat-icon">📅</div>
+          <div class="htp-feat-title">DAILY GOALS</div>
+          <div class="htp-feat-desc">Complete daily for bonus ELO</div>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <div class="htp-rules">
-    <div class="htp-rule"><span class="htp-rule-icon">🎯</span> Pick Rock, Paper or Scissors</div>
-    <div class="htp-rule"><span class="htp-rule-icon">⚡</span> First to 3 wins the match</div>
-    <div class="htp-rule"><span class="htp-rule-icon">🏆</span> Win matches to earn ELO points</div>
-    <div class="htp-rule"><span class="htp-rule-icon">👑</span> Climb: Bronze → Silver → Gold → Legend</div>
-    <div class="htp-rule"><span class="htp-rule-icon">🔥</span> Win streaks give bonus points!</div>
+
+  <div class="htp-dots">
+    <div class="htp-dot active" onclick="htpGoTo(0)"></div>
+    <div class="htp-dot" onclick="htpGoTo(1)"></div>
+    <div class="htp-dot" onclick="htpGoTo(2)"></div>
+    <div class="htp-dot" onclick="htpGoTo(3)"></div>
   </div>
-  <button class="htp-close" onclick="closeHTP()">⚡ LET'S PLAY!</button>
+
+  <div class="htp-nav">
+    <button class="htp-prev" id="htpPrevBtn" onclick="htpPrev()" style="display:none">← BACK</button>
+    <button class="htp-next" id="htpNextBtn" onclick="htpNext()">NEXT →</button>
+  </div>
+  <div class="htp-skip" onclick="closeHTP()">SKIP TUTORIAL</div>
+</div>
+
+<!-- STREAK BANNER -->
+<div class="streak-banner" id="streakBanner">
+  <div class="streak-fire">🔥</div>
+  <div class="streak-text" id="streakText">3 WIN STREAK!</div>
+</div>
+
+<!-- ACHIEVEMENT POPUP -->
+<div class="ach-popup" id="achPopup">
+  <div class="ach-icon" id="achIcon">🏆</div>
+  <div class="ach-info">
+    <div class="ach-label">ACHIEVEMENT</div>
+    <div class="ach-title" id="achTitle">First Blood!</div>
+    <div class="ach-desc" id="achDesc">Win your first match</div>
+  </div>
 </div>
 
 <!-- SPLASH -->
@@ -420,6 +519,17 @@ body::after{content:'';position:fixed;inset:0;
       <div class="mode-label">VS CPU</div>
       <div class="mode-desc">Play anytime</div>
     </button>
+  </div>
+
+  <!-- DAILY CHALLENGE BAR -->
+  <div class="daily-bar" id="dailyBar">
+    <div class="daily-icon">📅</div>
+    <div class="daily-info">
+      <div class="daily-title" id="dailyTitle">DAILY CHALLENGE</div>
+      <div class="daily-desc" id="dailyDesc">Win 3 matches today</div>
+      <div class="daily-prog-wrap"><div class="daily-prog" id="dailyProg" style="width:0%"></div></div>
+    </div>
+    <div class="daily-reward" id="dailyReward">+50 ELO</div>
   </div>
 
   <div class="splash-btns">
@@ -487,6 +597,7 @@ body::after{content:'';position:fixed;inset:0;
         <div class="hud-sc" id="p1sc">0</div>
         <div class="prog-dots" id="p1dots"></div>
         <div class="hud-rank" id="p1rankStr"></div>
+        <div class="streak-hud" id="streakHud"></div>
       </div>
       <div class="c-hud">
         <div class="c-round">Round</div>
@@ -507,7 +618,7 @@ body::after{content:'';position:fixed;inset:0;
       <div class="fighters">
         <div class="fighter p1-side">
           <div class="ftr-lbl" id="p1ftrlbl">YOU</div>
-          <div class="hand" id="h1">✊</div>
+          <div class="hand idle" id="h1"><span id="h1emoji">✊</span><span class="hand-lbl" id="h1lbl"></span></div>
           <div class="opp-status" id="p1status"></div>
         </div>
         <div class="fight-mid">
@@ -517,22 +628,25 @@ body::after{content:'';position:fixed;inset:0;
         </div>
         <div class="fighter p2-side">
           <div class="ftr-lbl" id="p2ftrlbl">CPU</div>
-          <div class="hand" id="h2">✊</div>
+          <div class="hand idle" id="h2"><span id="h2emoji">✊</span><span class="hand-lbl" id="h2lbl"></span></div>
           <div class="opp-status" id="p2status"></div>
         </div>
       </div>
     </div>
 
-    <div class="picks" id="pickGrid">
-      <button class="pb rock" onclick="pick('rock')" id="pb-rock">
-        <div class="pb-icon">✊</div><div class="pb-lbl">Rock</div>
-      </button>
-      <button class="pb paper" onclick="pick('paper')" id="pb-paper">
-        <div class="pb-icon">✋</div><div class="pb-lbl">Paper</div>
-      </button>
-      <button class="pb scissors" onclick="pick('scissors')" id="pb-scissors">
-        <div class="pb-icon">✌️</div><div class="pb-lbl">Scissors</div>
-      </button>
+    <div class="picks-wrap">
+      <div class="game-tip" id="gameTip" style="display:none">👆 TAP TO PICK YOUR WEAPON!</div>
+      <div class="picks" id="pickGrid">
+        <button class="pb rock" onclick="pick('rock')" id="pb-rock">
+          <div class="pb-icon">✊</div><div class="pb-lbl">Rock</div>
+        </button>
+        <button class="pb paper" onclick="pick('paper')" id="pb-paper">
+          <div class="pb-icon">✋</div><div class="pb-lbl">Paper</div>
+        </button>
+        <button class="pb scissors" onclick="pick('scissors')" id="pb-scissors">
+          <div class="pb-icon">✌️</div><div class="pb-lbl">Scissors</div>
+        </button>
+      </div>
     </div>
     <div class="pick-status" id="pickStatus">Choose your weapon!</div>
 
@@ -622,6 +736,11 @@ let isCPUMode=false, cpuDifficulty='easy', cpuHistory=[];
 let soundEnabled=true;
 let audioCtx=null;
 let gameId=0; // increments on every new game — old timers check this and abort
+let winStreak=0, bestStreak=0;
+let totalWins=0, totalGames=0;
+let unlockedAchs={};
+let dailyData={date:'',wins:0,goal:3,done:false};
+let htpSlide=0;
 
 // ── SOUND ENGINE (Web Audio API) ─────────────────────────────────────────────
 function getAudio(){
@@ -676,24 +795,199 @@ function loadLocal(){
     if(d.name) myName=d.name;
     if(d.elo) myElo=d.elo;
     if(d.sound!==undefined) soundEnabled=d.sound;
+    if(d.winStreak) winStreak=d.winStreak;
+    if(d.bestStreak) bestStreak=d.bestStreak;
+    if(d.totalWins) totalWins=d.totalWins;
+    if(d.totalGames) totalGames=d.totalGames;
+    if(d.unlockedAchs) unlockedAchs=d.unlockedAchs;
+    if(d.dailyData) dailyData=d.dailyData;
     document.getElementById('nameInput').value=d.name||'';
     document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇';
   }catch(e){}
 }
 function saveLocal(){
-  try{ localStorage.setItem('clashrps',JSON.stringify({id:myPlayerId,name:myName,elo:myElo,sound:soundEnabled})); }catch(e){}
+  try{ localStorage.setItem('clashrps',JSON.stringify({
+    id:myPlayerId,name:myName,elo:myElo,sound:soundEnabled,
+    winStreak,bestStreak,totalWins,totalGames,unlockedAchs,dailyData
+  })); }catch(e){}
 }
 
-// ── ONBOARDING ───────────────────────────────────────────────────────────────
-function showHTP(){ document.getElementById('htpOverlay').classList.add('visible'); }
-function closeHTP(){ document.getElementById('htpOverlay').classList.remove('visible'); playClick(); }
+// ── HTP SLIDES ───────────────────────────────────────────────────────────────
+const HTP_TOTAL=4;
+function showHTP(){
+  htpSlide=0;
+  htpRender();
+  document.getElementById('htpOverlay').classList.add('visible');
+  setTimeout(()=>htpAnimSlide(htpSlide),300);
+}
+function closeHTP(){
+  document.getElementById('htpOverlay').classList.remove('visible');
+  playClick();
+}
+function htpNext(){
+  if(htpSlide>=HTP_TOTAL-1){ closeHTP(); return; }
+  htpSlide++;
+  htpRender();
+  setTimeout(()=>htpAnimSlide(htpSlide),300);
+}
+function htpPrev(){
+  if(htpSlide<=0) return;
+  htpSlide--;
+  htpRender();
+}
+function htpGoTo(n){ htpSlide=n; htpRender(); setTimeout(()=>htpAnimSlide(n),300); }
+function htpRender(){
+  // slides
+  for(let i=0;i<HTP_TOTAL;i++){
+    const s=document.getElementById('htpSlide'+i);
+    if(s) s.classList.toggle('active',i===htpSlide);
+  }
+  // dots
+  document.querySelectorAll('.htp-dot').forEach((d,i)=>d.classList.toggle('active',i===htpSlide));
+  // prev/next
+  const prev=document.getElementById('htpPrevBtn');
+  const next=document.getElementById('htpNextBtn');
+  if(prev) prev.style.display=htpSlide>0?'':'none';
+  if(next) next.textContent=htpSlide>=HTP_TOTAL-1?"⚡ LET'S PLAY!":"NEXT →";
+}
+function htpAnimSlide(n){
+  // Animate battle demos
+  if(n===0){ htpBattle('hs1L','hs1R','hs1Badge'); }
+  else if(n===1){ htpBattle('hs2L','hs2R','hs2Badge'); }
+  else if(n===2){ htpBattle('hs3L','hs3R','hs3Badge'); }
+}
+function htpBattle(leftId,rightId,badgeId){
+  const L=document.getElementById(leftId);
+  const R=document.getElementById(rightId);
+  const B=document.getElementById(badgeId);
+  if(!L||!R||!B) return;
+  // reset
+  L.className='htp-hand h-left'; R.className='htp-hand h-right';
+  B.style.display='none';
+  // animate
+  setTimeout(()=>{ L.classList.add('h-win'); R.classList.add('h-lose'); B.style.display=''; }, 600);
+}
 
-// Show HTP on first visit
 function checkFirstVisit(){
   if(!localStorage.getItem('clashrps_visited')){
     setTimeout(showHTP,800);
     localStorage.setItem('clashrps_visited','1');
   }
+}
+
+// ── DAILY CHALLENGE ───────────────────────────────────────────────────────────
+const DAILY_GOALS=[
+  {desc:'Win 3 matches',goal:3,reward:50},
+  {desc:'Win 5 matches',goal:5,reward:80},
+  {desc:'Win 2 matches in a row',goal:2,reward:60,streak:true},
+];
+function getTodayStr(){
+  const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+function initDaily(){
+  const today=getTodayStr();
+  if(dailyData.date!==today){
+    // pick a random goal for today based on day number
+    const d=new Date(); const idx=d.getDate()%DAILY_GOALS.length;
+    const g=DAILY_GOALS[idx];
+    dailyData={date:today,wins:0,goal:g.goal,reward:g.reward,desc:g.desc,done:false,streakMode:g.streak||false};
+    saveLocal();
+  }
+  renderDaily();
+}
+function renderDaily(){
+  const el=document.getElementById('dailyBar');
+  if(!el) return;
+  const pct=Math.min(100,Math.round((dailyData.wins/dailyData.goal)*100));
+  document.getElementById('dailyTitle').textContent=dailyData.done?'✅ DAILY DONE!':'📅 DAILY CHALLENGE';
+  document.getElementById('dailyDesc').textContent=dailyData.desc||'Win 3 matches today';
+  document.getElementById('dailyProg').style.width=pct+'%';
+  document.getElementById('dailyReward').textContent=dailyData.done?'CLAIMED!':'+'+dailyData.reward+' ELO';
+}
+function updateDaily(won){
+  if(dailyData.done) return;
+  if(won){
+    if(dailyData.streakMode){
+      // streak mode: count consecutive wins
+      if(winStreak>0) dailyData.wins=winStreak;
+    } else {
+      dailyData.wins++;
+    }
+    if(dailyData.wins>=dailyData.goal){
+      dailyData.done=true;
+      myElo+=dailyData.reward;
+      saveLocal();
+      showToast('📅 DAILY COMPLETE! +'+dailyData.reward+' ELO 🎉','#ffd700');
+      setTimeout(()=>showAchievement('📅','DAILY DONE!','Earned +'+dailyData.reward+' bonus ELO'),600);
+    }
+    saveLocal();
+    renderDaily();
+  }
+}
+
+// ── ACHIEVEMENTS ──────────────────────────────────────────────────────────────
+const ACHIEVEMENTS=[
+  {id:'first_win',icon:'🏆',title:'First Blood!',desc:'Win your first match'},
+  {id:'streak3',icon:'🔥',title:'On Fire!',desc:'3 win streak'},
+  {id:'streak5',icon:'💥',title:'Unstoppable!',desc:'5 win streak'},
+  {id:'streak10',icon:'👑',title:'LEGENDARY!',desc:'10 win streak'},
+  {id:'wins10',icon:'⚔️',title:'Veteran',desc:'Win 10 matches'},
+  {id:'wins50',icon:'🗡️',title:'Warrior',desc:'Win 50 matches'},
+  {id:'impossible',icon:'💀',title:'Impossible!',desc:'Beat Impossible CPU'},
+];
+let achTimer=null;
+function checkAchievements(won, isCPU, diff){
+  if(!won) return;
+  totalWins++; totalGames++;
+  if(totalWins===1) unlockAch('first_win');
+  if(winStreak>=3) unlockAch('streak3');
+  if(winStreak>=5) unlockAch('streak5');
+  if(winStreak>=10) unlockAch('streak10');
+  if(totalWins===10) unlockAch('wins10');
+  if(totalWins===50) unlockAch('wins50');
+  if(isCPU&&diff==='impossible') unlockAch('impossible');
+  saveLocal();
+}
+function unlockAch(id){
+  if(unlockedAchs[id]) return;
+  unlockedAchs[id]=true;
+  const a=ACHIEVEMENTS.find(x=>x.id===id);
+  if(a) setTimeout(()=>showAchievement(a.icon,a.title,a.desc),1000);
+}
+function showAchievement(icon,title,desc){
+  const p=document.getElementById('achPopup');
+  document.getElementById('achIcon').textContent=icon;
+  document.getElementById('achTitle').textContent=title;
+  document.getElementById('achDesc').textContent=desc;
+  p.classList.add('show');
+  clearTimeout(achTimer);
+  achTimer=setTimeout(()=>p.classList.remove('show'),3500);
+}
+
+// ── STREAK SYSTEM ─────────────────────────────────────────────────────────────
+function updateStreak(won){
+  if(won){
+    winStreak++;
+    if(winStreak>bestStreak) bestStreak=winStreak;
+    if(winStreak>=2) showStreakBanner(winStreak);
+    const hudEl=document.getElementById('streakHud');
+    if(hudEl) hudEl.textContent=winStreak>=2?'🔥 '+winStreak+' STREAK':'';
+  } else {
+    winStreak=0;
+    const hudEl=document.getElementById('streakHud');
+    if(hudEl) hudEl.textContent='';
+  }
+  saveLocal();
+}
+let streakBannerTimer=null;
+function showStreakBanner(n){
+  const b=document.getElementById('streakBanner');
+  const labels={2:'DOUBLE WIN!',3:'3 WIN STREAK! 🔥',5:'5 STREAK! 💥',10:'10 STREAK! 👑'};
+  const txt=labels[n]||(n+' WIN STREAK! 🔥');
+  document.getElementById('streakText').textContent=txt;
+  b.classList.add('show');
+  clearTimeout(streakBannerTimer);
+  streakBannerTimer=setTimeout(()=>b.classList.remove('show'),2500);
 }
 
 // ── CPU AI ───────────────────────────────────────────────────────────────────
@@ -741,6 +1035,21 @@ function startCPU(diff){
   document.getElementById('tauntRow').style.display='none';
   enablePicks();
   document.getElementById('pickStatus').textContent='Choose your weapon!';
+  // Show in-game tooltip for first-timers
+  if(totalGames===0) showGameTip();
+}
+
+function showGameTip(){
+  const tip=document.getElementById('gameTip');
+  if(!tip) return;
+  tip.style.display='';
+  // Add pulse hint to all pick buttons
+  CHOICES.forEach(c=>document.getElementById('pb-'+c).classList.add('pulse-hint'));
+}
+function hideGameTip(){
+  const tip=document.getElementById('gameTip');
+  if(tip) tip.style.display='none';
+  CHOICES.forEach(c=>document.getElementById('pb-'+c).classList.remove('pulse-hint'));
 }
 
 // ── ONLINE ────────────────────────────────────────────────────────────────────
@@ -902,9 +1211,11 @@ function setupGameUI(isOnline){
 // ── PICK ──────────────────────────────────────────────────────────────────────
 function pick(choice){
   if(hasChosen) return;
+  hideGameTip();
   playPick();
   myChoice=choice;
   hasChosen=true;
+  totalGames++;
   CHOICES.forEach(c=>{
     const b=document.getElementById('pb-'+c);
     b.disabled=true;
@@ -961,8 +1272,12 @@ function showRoundResult(data){
 
   const h1=document.getElementById('h1');
   const h2=document.getElementById('h2');
-  h1.textContent=EMOJIS[p1Choice]; h2.textContent=EMOJIS[p2Choice];
-  h1.className='hand reveal'; h2.className='hand reveal';
+  document.getElementById('h1emoji').textContent=EMOJIS[p1Choice];
+  document.getElementById('h2emoji').textContent=EMOJIS[p2Choice];
+  document.getElementById('h1lbl').textContent=p1Choice.toUpperCase();
+  document.getElementById('h2lbl').textContent=p2Choice.toUpperCase();
+  h1.className='hand reveal showing-'+p1Choice;
+  h2.className='hand reveal showing-'+p2Choice;
 
   const mr=document.getElementById('midResult');
   const md=document.getElementById('midDesc');
@@ -1027,8 +1342,12 @@ function resetForNext(){
 function resetHandsIdle(){
   const h1=document.getElementById('h1');
   const h2=document.getElementById('h2');
-  h1.textContent='✊'; h1.className='hand p1-side';
-  h2.textContent='✊'; h2.className='hand p2-side';
+  h1.className='hand p1-side idle';
+  h2.className='hand p2-side idle';
+  document.getElementById('h1emoji').textContent='✊';
+  document.getElementById('h2emoji').textContent='✊';
+  document.getElementById('h1lbl').textContent='';
+  document.getElementById('h2lbl').textContent='';
 }
 function enablePicks(){
   CHOICES.forEach(c=>{ const b=document.getElementById('pb-'+c); b.disabled=false; b.classList.remove('chosen'); });
@@ -1072,6 +1391,12 @@ function showGameOver(data){
     document.getElementById('eloChange').style.display='none';
     document.getElementById('rankUpBanner').style.display='none';
   }
+
+  // Streak + achievement tracking
+  const iWonFinal=(data.yourSide==='p1'&&data.winner==='p1')||(data.yourSide==='p2'&&data.winner==='p2');
+  updateStreak(iWonFinal);
+  checkAchievements(iWonFinal, isCPUMode, cpuDifficulty);
+  updateDaily(iWonFinal);
 
   updateRankUI(); saveLocal();
 
@@ -1254,6 +1579,7 @@ function showToast(msg,color='#39ff85'){
 loadLocal();
 connectSocket();
 checkFirstVisit();
+initDaily();
 </script>
 </body>
 </html>
