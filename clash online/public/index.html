@@ -1288,6 +1288,12 @@ function setupGameUI(isOnline){
     document.getElementById('tauntRow').style.display='flex';
   }
   p1score=0; p2score=0; currentRound=1; gameHistory=[];
+  // Safety — always ensure picks are enabled and state is clean
+  myChoice=null; hasChosen=false;
+  enablePicks();
+  document.getElementById('pickStatus').textContent='Choose your weapon!';
+  document.getElementById('p1status').textContent='';
+  document.getElementById('p2status').textContent='';
 }
 
 // ── PICK ──────────────────────────────────────────────────────────────────────
@@ -1297,7 +1303,6 @@ function pick(choice){
   playPick();
   myChoice=choice;
   hasChosen=true;
-  totalGames++;
   CHOICES.forEach(c=>{
     const b=document.getElementById('pb-'+c);
     b.disabled=true;
@@ -1504,10 +1509,10 @@ function handleRematch(){
 }
 
 function doRematch(){
-  p1score=0; p2score=0; currentRound=1; gameHistory=[];
   document.getElementById('goOverlay').classList.remove('visible');
-  document.getElementById('histRow').innerHTML='';
-  updateScoreUI(); resetForNext();
+  gameId++; // kill any stale timers
+  setupGameUI(true); // fully reset names, scores, hands, enables picks
+  showScreen('game');
   showToast('🔁 REMATCH!','#39ff85');
 }
 
