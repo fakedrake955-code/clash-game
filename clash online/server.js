@@ -77,11 +77,13 @@ io.on('connection', (socket) => {
     io.emit('queueSize', queue.length);
   });
 
-  socket.on('makeChoice', ({ choice }) => {
+  socket.on('makeChoice', ({ choice, powerUp }) => {
     const room = getRoomFor(socket.id);
     if (!room) return;
     const side = room.p1 === socket.id ? 'p1' : 'p2';
     room.choices[side] = choice;
+    if (powerUp) room.powerUps = room.powerUps || {};
+    if (powerUp) room.powerUps[side] = powerUp;
     const opp = side === 'p1' ? room.p2 : room.p1;
     io.to(opp).emit('opponentChose');
     if (room.choices.p1 && room.choices.p2) resolveRound(room);
@@ -224,10 +226,22 @@ function resolveRound(room) {
   else if (BEATS[p1Choice] === p2Choice) result = 'p1';
   else result = 'p2';
 
+  // Apply power-ups
+  const pups = room.powerUps || {};
+  let p1PU = pups.p1; let p2PU = pups.p2;
+  // Bomb: auto-win for the user who used it
+  if (p1PU === 'bomb') result = 'p1';
+  else if (p2PU === 'bomb') result = 'p2';
+  // Shield: block a loss → draw
+  else if (p1PU === 'shield' && result === 'p2') result = 'draw';
+  else if (p2PU === 'shield' && result === 'p1') result = 'draw';
+
+  room.powerUps = {}; // reset power-ups
+
   if (result !== 'draw') room.scores[result]++;
   room.choices = {};
 
-  const data = { p1Choice, p2Choice, result, p1Score: room.scores.p1, p2Score: room.scores.p2 };
+  const data = { p1Choice, p2Choice, result, p1Score: room.scores.p1, p2Score: room.scores.p2, p1PU: p1PU||null, p2PU: p2PU||null };
   io.to(room.p1).emit('roundResult', data);
   io.to(room.p2).emit('roundResult', data);
 
