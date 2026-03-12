@@ -453,6 +453,73 @@ body::after{content:'';position:fixed;inset:0;
 .streak-hud{font-family:'Bebas Neue',cursive;font-size:.75rem;letter-spacing:2px;color:var(--p1);
   min-height:14px;animation:fls .5s ease;}
 
+/* ── POWER-UPS ───────────────────────────────────────────── */
+.powerup-row{display:flex;gap:8px;justify-content:center;align-items:center;min-height:44px;}
+.pu-btn{width:44px;height:44px;border-radius:12px;border:2px solid var(--border);
+  background:var(--panel);cursor:pointer;font-size:1.3rem;position:relative;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.pu-btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 0 18px rgba(255,215,0,.3);border-color:var(--draw);}
+.pu-btn:disabled{opacity:.3;cursor:not-allowed;}
+.pu-btn.used{opacity:.2;filter:grayscale(1);}
+.pu-btn .pu-label{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+  font-size:.45rem;letter-spacing:1px;color:var(--dim);white-space:nowrap;font-family:'Bebas Neue',cursive;}
+.pu-btn.pu-shield{border-color:rgba(0,212,255,.4);}
+.pu-btn.pu-mirror{border-color:rgba(255,215,0,.4);}
+.pu-btn.pu-bomb{border-color:rgba(255,85,85,.4);}
+.pu-activate-msg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  font-family:'Bebas Neue',cursive;font-size:3rem;letter-spacing:6px;z-index:600;
+  pointer-events:none;text-shadow:0 0 30px currentColor;}
+.pu-activate-msg.pop{animation:puPop .8s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes puPop{0%{transform:translate(-50%,-50%) scale(0);opacity:0}
+  40%{transform:translate(-50%,-50%) scale(1.2);opacity:1}
+  70%{transform:translate(-50%,-50%) scale(.95);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+
+/* ── LUCKY ROUND ─────────────────────────────────────────── */
+.lucky-banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,107,53,.15));
+  border:2px solid var(--draw);border-radius:20px;padding:14px 32px;z-index:550;
+  text-align:center;pointer-events:none;}
+.lucky-banner.show{animation:luckyPop .6s cubic-bezier(.34,1.56,.64,1) forwards,
+  luckyFade .4s ease 2s forwards;}
+@keyframes luckyPop{0%{transform:translate(-50%,-50%) scale(0);opacity:0}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes luckyFade{0%{opacity:1}100%{opacity:0;pointer-events:none;}}
+.lucky-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:5px;color:var(--draw);
+  filter:drop-shadow(0 0 15px rgba(255,215,0,.6));}
+.lucky-sub{font-size:.7rem;letter-spacing:3px;color:var(--text);}
+.lucky-indicator{background:linear-gradient(135deg,rgba(255,215,0,.15),transparent);
+  border:1px solid var(--draw);border-radius:8px;padding:3px 10px;
+  font-family:'Bebas Neue',cursive;font-size:.8rem;letter-spacing:2px;color:var(--draw);
+  display:none;text-align:center;animation:luckyGlow 1s ease-in-out infinite alternate;}
+.lucky-indicator.show{display:block;}
+@keyframes luckyGlow{from{box-shadow:0 0 5px rgba(255,215,0,.2)}to{box-shadow:0 0 15px rgba(255,215,0,.5)}}
+
+/* ── COMBO SYSTEM ────────────────────────────────────────── */
+.combo-display{position:fixed;top:50%;right:20px;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  pointer-events:none;z-index:200;}
+.combo-num{font-family:'Bebas Neue',cursive;font-size:3rem;line-height:1;
+  background:linear-gradient(135deg,var(--p1),#ff0080);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 10px rgba(255,107,53,.5));
+  transform:scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.combo-num.show{transform:scale(1);}
+.combo-label{font-family:'Bebas Neue',cursive;font-size:.7rem;letter-spacing:3px;color:var(--p1);opacity:.8;}
+.combo-x{font-family:'Bebas Neue',cursive;font-size:1rem;color:var(--draw);letter-spacing:2px;opacity:0;transition:opacity .3s;}
+.combo-x.show{opacity:1;}
+
+/* ── CPU TRASH TALK ──────────────────────────────────────── */
+.cpu-talk{position:absolute;top:-42px;right:0;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px 12px 0 12px;
+  padding:6px 12px;font-size:.7rem;letter-spacing:1px;color:var(--p2);
+  white-space:nowrap;opacity:0;transition:opacity .3s;z-index:10;
+  max-width:160px;white-space:normal;text-align:right;line-height:1.3;}
+.cpu-talk.show{opacity:1;}
+.cpu-talk::after{content:'';position:absolute;bottom:-6px;right:8px;
+  border:6px solid transparent;border-top-color:var(--border);}
+.p2-side{position:relative;}
+
 /* ── GLOBAL CHAT ─────────────────────────────────────────── */
 .chat-fab{position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;
   background:linear-gradient(135deg,var(--p1),#ff0080);border:none;cursor:pointer;z-index:450;
@@ -800,7 +867,22 @@ body::after{content:'';position:fixed;inset:0;
         </button>
       </div>
     </div>
+    <div class="lucky-indicator" id="luckyIndicator">⭐ 2X LUCKY ROUND!</div>
     <div class="pick-status" id="pickStatus">Choose your weapon!</div>
+
+    <!-- POWER-UPS ROW -->
+    <div class="powerup-row" id="powerupRow" style="display:none">
+      <span style="font-size:.6rem;letter-spacing:2px;color:var(--border);font-family:'Bebas Neue',cursive;">POWER-UP:</span>
+      <button class="pu-btn pu-shield" id="pu-shield" onclick="usePowerUp('shield')" title="Shield — block one loss">
+        🛡️<span class="pu-label">SHIELD</span>
+      </button>
+      <button class="pu-btn pu-mirror" id="pu-mirror" onclick="usePowerUp('mirror')" title="Mirror — copy opponent's last pick">
+        🪞<span class="pu-label">MIRROR</span>
+      </button>
+      <button class="pu-btn pu-bomb" id="pu-bomb" onclick="usePowerUp('bomb')" title="Bomb — auto-win this round">
+        💣<span class="pu-label">BOMB</span>
+      </button>
+    </div>
 
     <div class="taunt-row" id="tauntRow" style="display:none">
       <span style="font-size:.6rem;letter-spacing:2px;color:var(--border)">TAUNT:</span>
@@ -867,6 +949,13 @@ body::after{content:'';position:fixed;inset:0;
     </div>
   </div>
   <div class="found-count" id="foundCount">3</div>
+</div>
+
+<!-- COMBO DISPLAY -->
+<div class="combo-display" id="comboDisplay">
+  <div class="combo-num" id="comboNum">0</div>
+  <div class="combo-x show" id="comboX">✕ COMBO</div>
+  <div class="combo-label" id="comboLabel"></div>
 </div>
 
 <!-- GLOBAL CHAT -->
@@ -1200,11 +1289,11 @@ function showDiffScreen(){
 }
 
 function startCPU(diff){
-  gameId++; // kill all pending timers from previous game
+  gameId++;
   const gid=gameId;
   cpuDifficulty=diff; isCPUMode=true; cpuHistory=[];
   p1score=0; p2score=0; currentRound=1; gameHistory=[];
-  myChoice=null; hasChosen=false;
+  myChoice=null; hasChosen=false; matchCombo=0; lastCPUChoice=null;
   const diffNames={easy:'🤖 EASY CPU',medium:'🤖 MEDIUM CPU',hard:'😤 HARD CPU',impossible:'💀 IMPOSSIBLE CPU'};
   oppName=diffNames[diff];
   setupGameUI(false);
@@ -1212,9 +1301,21 @@ function startCPU(diff){
   document.getElementById('modeIndicator').textContent='🤖 VS CPU — '+diff.toUpperCase();
   document.getElementById('modeIndicator').className='mode-indicator cpu-ind';
   document.getElementById('tauntRow').style.display='none';
+  // Add CPU talk bubble to p2 side
+  let bubble=document.getElementById('cpuTalkBubble');
+  if(!bubble){
+    bubble=document.createElement('div');
+    bubble.id='cpuTalkBubble';
+    bubble.className='cpu-talk';
+    const p2side=document.getElementById('h2');
+    if(p2side&&p2side.parentNode) p2side.parentNode.style.position='relative',p2side.parentNode.appendChild(bubble);
+    else document.querySelector('.game-screen')?.appendChild(bubble);
+  }
+  bubble.classList.remove('show');
+  initPowerUps();
+  checkLuckyRound();
   enablePicks();
   document.getElementById('pickStatus').textContent='Choose your weapon!';
-  // Show in-game tooltip for first-timers
   if(totalGames===0) showGameTip();
 }
 
@@ -1431,13 +1532,30 @@ function pick(choice){
 function resolveCPURound(yourChoice){
   const gid=gameId;
   const cpuChoice=getCPUChoice(yourChoice);
+  lastCPUChoice=cpuChoice;
   let result;
   if(yourChoice===cpuChoice) result='draw';
   else if(BEATS[yourChoice]===cpuChoice) result='p1';
   else result='p2';
 
+  // Apply power-up effects
+  if(puActive) result=applyPowerUpToResult(result);
+
+  // Lucky round: double the winning point
+  const luckyWin=isLuckyRound&&result==='p1';
+  if(luckyWin){ p1score++; showToast('⭐ LUCKY DOUBLE!','#ffd700'); }
+
   if(result==='p1') p1score++;
   else if(result==='p2') p2score++;
+
+  // Combo update
+  updateCombo(result==='p1');
+
+  // CPU trash talk (only every 2nd round to not annoy)
+  if(currentRound%2===0||result!=='draw'){
+    const talkOutcome=result==='p1'?'cpu_lose':result==='p2'?'cpu_win':'draw';
+    setTimeout(()=>showCPUTalk(cpuDifficulty,talkOutcome),350);
+  }
 
   showRoundResult({p1Choice:yourChoice,p2Choice:cpuChoice,result,p1Score:p1score,p2Score:p2score});
 
@@ -1528,6 +1646,7 @@ function resetForNext(){
   document.getElementById('p2status').textContent='';
   resetHandsIdle();
   enablePicks();
+  if(isCPUMode) checkLuckyRound();
 }
 
 function resetHandsIdle(){
@@ -1835,6 +1954,166 @@ function addChatSystem(msg){
 
 function escHtml(s){
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── POWER-UPS ─────────────────────────────────────────────────────────────────
+const PU_KEYS=['shield','mirror','bomb'];
+let puUsed={shield:false,mirror:false,bomb:false};
+let puActive=null; // active this round
+let lastCPUChoice=null;
+
+function initPowerUps(){
+  puUsed={shield:false,mirror:false,bomb:false};
+  puActive=null;
+  PU_KEYS.forEach(k=>{
+    const b=document.getElementById('pu-'+k);
+    b.classList.remove('used');
+    b.disabled=false;
+  });
+  document.getElementById('powerupRow').style.display='flex';
+}
+
+function usePowerUp(type){
+  if(puUsed[type]||puActive) return;
+  puUsed[type]=true;
+  puActive=type;
+  document.getElementById('pu-'+type).classList.add('used');
+  PU_KEYS.forEach(k=>document.getElementById('pu-'+k).disabled=true);
+  const msgs={shield:'🛡️ SHIELD ACTIVE!',mirror:'🪞 MIRROR READY!',bomb:'💣 BOMB ARMED!'};
+  const cols={shield:'#00d4ff',mirror:'#ffd700',bomb:'#ff3965'};
+  showPUActivate(msgs[type],cols[type]);
+  showToast(msgs[type],cols[type]);
+  // Mirror: auto-pick same as last CPU choice
+  if(type==='mirror'&&lastCPUChoice&&!hasChosen){
+    setTimeout(()=>pick(lastCPUChoice),400);
+  }
+}
+
+function showPUActivate(msg,color){
+  const el=document.getElementById('puActivateMsg')||createPUMsgEl();
+  el.textContent=msg;
+  el.style.color=color;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+function createPUMsgEl(){
+  const el=document.createElement('div');
+  el.id='puActivateMsg';
+  el.className='pu-activate-msg';
+  document.body.appendChild(el);
+  return el;
+}
+
+function applyPowerUpToResult(result){
+  // Shield: if you lose this round, block it → draw
+  if(puActive==='shield'&&result==='p2'){
+    showToast('🛡️ SHIELD BLOCKED THE LOSS!','#00d4ff');
+    puActive=null;
+    PU_KEYS.forEach(k=>{ if(!puUsed[k]) document.getElementById('pu-'+k).disabled=false; });
+    return 'draw';
+  }
+  // Bomb: auto-win this round
+  if(puActive==='bomb'){
+    showToast('💣 BOMB EXPLODES — YOU WIN!','#ff3965');
+    puActive=null;
+    PU_KEYS.forEach(k=>{ if(!puUsed[k]) document.getElementById('pu-'+k).disabled=false; });
+    return 'p1';
+  }
+  puActive=null;
+  PU_KEYS.forEach(k=>{ if(!puUsed[k]) document.getElementById('pu-'+k).disabled=false; });
+  return result;
+}
+
+// ── LUCKY ROUND ───────────────────────────────────────────────────────────────
+let isLuckyRound=false;
+
+function checkLuckyRound(){
+  isLuckyRound=Math.random()<0.2; // 20% chance each round
+  const ind=document.getElementById('luckyIndicator');
+  if(isLuckyRound){
+    ind.classList.add('show');
+    showLuckyBanner();
+  } else {
+    ind.classList.remove('show');
+  }
+}
+
+function showLuckyBanner(){
+  let banner=document.getElementById('luckyBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='luckyBanner';
+    banner.className='lucky-banner';
+    banner.innerHTML='<div class="lucky-title">⭐ LUCKY ROUND!</div><div class="lucky-sub">WIN = COUNTS DOUBLE</div>';
+    document.body.appendChild(banner);
+  }
+  banner.classList.remove('show');
+  void banner.offsetWidth;
+  banner.classList.add('show');
+}
+
+// ── COMBO SYSTEM ──────────────────────────────────────────────────────────────
+let matchCombo=0;
+
+function updateCombo(won){
+  const display=document.getElementById('comboDisplay');
+  const num=document.getElementById('comboNum');
+  const lbl=document.getElementById('comboLabel');
+  const xEl=document.getElementById('comboX');
+  if(!display) return;
+  if(won){
+    matchCombo++;
+    if(matchCombo>=2){
+      num.textContent=matchCombo;
+      num.classList.add('show');
+      lbl.textContent='COMBO';
+      xEl.classList.add('show');
+      if(matchCombo===3) showToast('🔥 TRIPLE COMBO!','#ff6b35');
+      if(matchCombo===5) showToast('⚡ UNSTOPPABLE COMBO!','#ff0080');
+    }
+  } else {
+    matchCombo=0;
+    num.classList.remove('show');
+    xEl.classList.remove('show');
+  }
+}
+
+// ── CPU TRASH TALK ────────────────────────────────────────────────────────────
+const TRASH={
+  easy:{
+    losing:["hehe i'm so bad 😅","don't go easy on me!","i'm trying my best!","oops teehee 🙈"],
+    winning:["lucky guess!","i'm not that bad!","gotcha! 😄","easy peasy!"],
+    draw:["great minds!","same brain?","mirror match!"]
+  },
+  medium:{
+    losing:["nice move...","you're good at this","i'll remember that","clever play"],
+    winning:["calculated 🧠","saw that coming","pattern detected","too predictable"],
+    draw:["interesting...","we think alike","coincidence?"]
+  },
+  hard:{
+    losing:["...fluke","i'll adapt","don't get comfortable","one time"],
+    winning:["too easy 😏","i read you","PREDICTED","you're falling into my trap"],
+    draw:["boring","try harder","predictable patterns"]
+  },
+  impossible:{
+    losing:["IMPOSSIBLE","this can't be real","ERROR: ANOMALY DETECTED","...recalculating"],
+    winning:["RESISTANCE IS FUTILE","CHECKMATE","ALGORITHM WINS","YOU CANNOT WIN"],
+    draw:["ACCEPTABLE","LOGICAL","COMPUTING NEXT MOVE..."]
+  }
+};
+
+let talkTimer=null;
+function showCPUTalk(diff,outcome){
+  const pool=TRASH[diff]||TRASH.medium;
+  const lines=outcome==='cpu_win'?pool.winning:outcome==='draw'?pool.draw:pool.losing;
+  const line=lines[Math.floor(Math.random()*lines.length)];
+  const bubble=document.getElementById('cpuTalkBubble');
+  if(!bubble) return;
+  clearTimeout(talkTimer);
+  bubble.textContent=line;
+  bubble.classList.add('show');
+  talkTimer=setTimeout(()=>bubble.classList.remove('show'),2500);
 }
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
