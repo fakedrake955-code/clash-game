@@ -6,6 +6,7 @@
 <title>CLASH RPS — Online Rock Paper Scissors</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://sdk.crazygames.com/crazygames-sdk-v2.js"></script>
 <style>
 :root {
   --p1:#ff6b35;--p1d:rgba(255,107,53,.15);--p1g:rgba(255,107,53,.5);
@@ -1307,6 +1308,7 @@ function getCPUChoice(myPick){
 // ── CPU GAME FLOW ─────────────────────────────────────────────────────────────
 function showDiffScreen(){ 
   setName();
+  CG.gameplayStop();
   showScreen('diffScreen'); 
 }
 
@@ -1339,6 +1341,7 @@ function startCPU(diff){
   enablePicks();
   document.getElementById('pickStatus').textContent='Choose your weapon!';
   if(totalGames===0) showGameTip();
+  CG.gameplayStart();
 }
 
 function showGameTip(){
@@ -1487,6 +1490,7 @@ function showFoundMatch(data){
       setupGameUI(true);
       initPowerUps();
       showScreen('game');
+      CG.gameplayStart();
     }
   },800);
 }
@@ -1732,6 +1736,10 @@ function showGameOver(data){
   updateStreak(iWonFinal);
   checkAchievements(iWonFinal, isCPUMode, cpuDifficulty);
   updateDaily(iWonFinal);
+
+  // CrazyGames SDK events
+  CG.gameplayStop();
+  if(iWonFinal) CG.happytime();
 
   updateRankUI(); saveLocal();
 
@@ -2164,11 +2172,91 @@ function receiveChatMsg(data){
   }
 }
 
+// ── CRAZYGAMES SDK ────────────────────────────────────────────────────────────
+const CG = {
+  ready: false,
+  sdk: null,
+
+  init(){
+    // Wait for SDK to be available
+    const tryInit = () => {
+      if(window.CrazyGames && window.CrazyGames.SDK){
+        this.sdk = window.CrazyGames.SDK;
+        this.ready = true;
+        this._onReady();
+      } else {
+        setTimeout(tryInit, 100);
+      }
+    };
+    tryInit();
+  },
+
+  _onReady(){
+    console.log('[CG SDK] Ready ✅');
+    // Signal loading started
+    this.loadingStart();
+
+    // Listen for settings changes (mute audio, disable chat)
+    this.sdk.game.addSettingsChangeListener((settings) => {
+      // Mute audio if CrazyGames requests it
+      if(settings.muteAudio !== undefined){
+        soundEnabled = !settings.muteAudio;
+        document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+      }
+      // Hide chat if CrazyGames requests it
+      if(settings.disableChat){
+        const fab = document.getElementById('chatFab');
+        const panel = document.getElementById('chatPanel');
+        if(fab) fab.style.display = 'none';
+        if(panel) panel.style.display = 'none';
+      }
+    });
+
+    // Check instant multiplayer — if true, go straight to online queue
+    const isInstant = this.sdk.game.isInstantMultiplayer;
+    if(isInstant){
+      console.log('[CG SDK] Instant Multiplayer detected — launching queue');
+      setTimeout(() => {
+        startOnline();
+      }, 500);
+    }
+  },
+
+  loadingStart(){
+    if(!this.ready) return;
+    try { this.sdk.game.loadingStart(); } catch(e){}
+  },
+
+  loadingStop(){
+    if(!this.ready) return;
+    try { this.sdk.game.loadingStop(); } catch(e){}
+  },
+
+  gameplayStart(){
+    if(!this.ready) return;
+    try { this.sdk.game.gameplayStart(); } catch(e){}
+  },
+
+  gameplayStop(){
+    if(!this.ready) return;
+    try { this.sdk.game.gameplayStop(); } catch(e){}
+  },
+
+  happytime(){
+    if(!this.ready) return;
+    try { this.sdk.game.happytime(); } catch(e){}
+  }
+};
+
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 loadLocal();
 connectSocket();
 checkFirstVisit();
 initDaily();
+// Init CrazyGames SDK — must be after DOM is ready
+CG.init();
+// Signal loading complete — game is ready to play
+setTimeout(() => CG.loadingStop(), 800);
 </script>
 </body>
 </html>
